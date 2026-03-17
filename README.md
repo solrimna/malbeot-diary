@@ -9,9 +9,6 @@ cp .env.example .env
 3. 의존성 설치
 - pip install uv
 - uv pip install --system -r requirements.txt
-
-5. 로컬 DB/Redis 실행
-docker compose up db redis -d
-
-6. 서버 실행
+  
+4. 서버 실행
 uvicorn app.main:app --reload
