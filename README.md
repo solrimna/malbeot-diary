@@ -7,11 +7,11 @@ git clone https://github.com/solrimna/malbeot-diary.git
 cp .env.example .env
 
 3. 의존성 설치
-pip install uv
-uv pip install --system -r requirements.txt
+- pip install uv
+- uv pip install --system -r requirements.txt
 
-4. 로컬 DB/Redis 실행
+5. 로컬 DB/Redis 실행
 docker compose up db redis -d
 
-5. 서버 실행
+6. 서버 실행
 uvicorn app.main:app --reload
