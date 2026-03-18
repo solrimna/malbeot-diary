@@ -435,9 +435,7 @@ input:focus {
     font-size: 14px;
     line-height: 1.8;
     color: rgba(86, 28, 36, 0.82);
-    display: -webkit-box;
-    -webkit-line-clamp: 7;
-    -webkit-box-orient: vertical;
+    max-height: calc(1.8em * 7);
     overflow: hidden;
 }
 
