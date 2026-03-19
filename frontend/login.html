@@ -55,10 +55,10 @@
 
         <div id="signup-form" class="hidden-form">
             <h3 class="text-xl font-medium mb-8 text-center tracking-tight" style="color: var(--text-color);">회원가입</h3>
-            <form class="space-y-6">
+            <form class="space-y-6" onsubmit="return false;">
                 <div>
                     <label class="block text-xs uppercase tracking-widest mb-2 opacity-70" style="color: var(--text-color);">Name</label>
-                    <input type="text" class="w-full bg-transparent border-b border-[#C7B7A3] py-2 px-1 text-sm transition-all focus:border-[#561C24]" placeholder="닉네임 입력하세요">
+                    <input type="text" class="w-full bg-transparent border-b border-[#C7B7A3] py-2 px-1 text-sm transition-all focus:border-[#561C24]" placeholder="닉네임을 입력하세요">
                 </div>
                 <div>
                     <label class="block text-xs uppercase tracking-widest mb-2 opacity-70" style="color: var(--text-color);">ID</label>
@@ -66,9 +66,26 @@
                 </div>
                 <div>
                     <label class="block text-xs uppercase tracking-widest mb-2 opacity-70" style="color: var(--text-color);">Password</label>
-                    <input type="password" class="w-full bg-transparent border-b border-[#C7B7A3] py-2 px-1 text-sm transition-all focus:border-[#561C24]" placeholder="비밀번호를 입력하세요">
+                    <input
+                        type="password"
+                        id="signup-password"
+                        class="w-full bg-transparent border-b border-[#C7B7A3] py-2 px-1 text-sm transition-all focus:border-[#561C24]"
+                        placeholder="비밀번호를 입력하세요"
+                        oninput="checkPasswordMatch()"
+                    >
                 </div>
-                <button type="button" class="w-full py-4 mt-4 text-[#E8D8C4] text-sm tracking-[0.2em] uppercase font-medium hover:opacity-90 transition-opacity" style="background-color: var(--bg-color);">
+                <div>
+                    <label class="block text-xs uppercase tracking-widest mb-2 opacity-70" style="color: var(--text-color);">Confirm Password</label>
+                    <input
+                        type="password"
+                        id="signup-password-confirm"
+                        class="w-full bg-transparent border-b border-[#C7B7A3] py-2 px-1 text-sm transition-all focus:border-[#561C24]"
+                        placeholder="비밀번호를 다시 입력하세요"
+                        oninput="checkPasswordMatch()"
+                    >
+                    <p id="password-match-msg" class="mt-2 text-xs hidden"></p>
+                </div>
+                <button type="button" onclick="handleSignup()" class="w-full py-4 mt-4 text-[#E8D8C4] text-sm tracking-[0.2em] uppercase font-medium hover:opacity-90 transition-opacity" style="background-color: var(--bg-color);">
                     Join Us
                 </button>
             </form>
@@ -82,5 +99,44 @@
 
     <!-- 외부 JS -->
     <script src="js/frontend.js"></script>
+
+    <script>
+        function checkPasswordMatch() {
+            const pw = document.getElementById('signup-password').value;
+            const pwConfirm = document.getElementById('signup-password-confirm').value;
+            const msg = document.getElementById('password-match-msg');
+            const confirmInput = document.getElementById('signup-password-confirm');
+
+            if (pwConfirm === '') {
+                msg.classList.add('hidden');
+                confirmInput.style.borderColor = '';
+                return;
+            }
+
+            if (pw === pwConfirm) {
+                msg.textContent = '✓ 비밀번호가 일치합니다.';
+                msg.style.color = '#6B8F5E';
+                msg.classList.remove('hidden');
+                confirmInput.style.borderColor = '#6B8F5E';
+            } else {
+                msg.textContent = '✗ 비밀번호가 일치하지 않습니다.';
+                msg.style.color = '#561C24';
+                msg.classList.remove('hidden');
+                confirmInput.style.borderColor = '#561C24';
+            }
+        }
+
+        function handleSignup() {
+            const pw = document.getElementById('signup-password').value;
+            const pwConfirm = document.getElementById('signup-password-confirm').value;
+
+            if (pw !== pwConfirm) {
+                alert('비밀번호가 일치하지 않습니다. 다시 확인해주세요.');
+                return;
+            }
+
+            // 이후 실제 회원가입 로직 연결
+        }
+    </script>
 </body>
 </html>

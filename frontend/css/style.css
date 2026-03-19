@@ -1,3 +1,6 @@
+/* =========================
+   Common
+========================= */
 :root {
     --bg-color: #561C24;
     --nav-bg: #6D2932;
@@ -6,27 +9,23 @@
     --text-color: #561C24;
 }
 
-.page-index {
-    font-family: "Petit Formal Script", cursive;
-    background-color: var(--bg-color);
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-}
-
-.page-login {
-    background-color: var(--bg-color);
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-}
-
 .font-script {
     font-family: "Petit Formal Script", cursive;
 }
 
 .font-kr {
     font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* =========================
+   index.html
+========================= */
+.page-index {
+    font-family: "Petit Formal Script", cursive;
+    background-color: var(--bg-color);
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
 }
 
 @keyframes slideUpFadeIn {
@@ -107,6 +106,16 @@
     animation: fadeIn 0.8s ease-out forwards;
 }
 
+/* =========================
+   login.html
+========================= */
+.page-login {
+    background-color: var(--bg-color);
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
 input:focus {
     outline: none;
     border-color: var(--bg-color);
@@ -117,6 +126,9 @@ input:focus {
     display: none;
 }
 
+/* =========================
+   ai-persona.html
+========================= */
 .page-persona {
     background:
         radial-gradient(circle at top, rgba(232, 216, 196, 0.12), transparent 30%),
@@ -268,6 +280,9 @@ input:focus {
     opacity: 0.6;
 }
 
+/* =========================
+   my-diary.html
+========================= */
 .page-diary {
     background:
         radial-gradient(circle at top, rgba(232, 216, 196, 0.08), transparent 24%),
@@ -638,5 +653,177 @@ input:focus {
         min-width: 100px;
         height: 320px;
         font-size: 12px;
+    }
+}
+
+/* =========================
+   diary_detail.html
+========================= */
+.page-diary-detail {
+    background:
+        radial-gradient(circle at top, rgba(232, 216, 196, 0.08), transparent 24%),
+        linear-gradient(180deg, #561C24 0%, #6D2932 100%);
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+.diary-detail-shell {
+    max-width: 1180px;
+    margin: 0 auto;
+}
+
+.diary-detail-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 28px;
+}
+
+.diary-detail-panel {
+    background: linear-gradient(180deg, rgba(232, 216, 196, 0.98) 0%, rgba(231, 220, 201, 0.96) 100%);
+    border: 1px solid rgba(199, 183, 163, 0.45);
+    border-radius: 30px;
+    padding: 30px;
+    box-shadow: 0 24px 50px rgba(0, 0, 0, 0.22);
+}
+
+.diary-detail-side {
+    background: linear-gradient(180deg, rgba(57, 24, 31, 0.8) 0%, rgba(38, 17, 22, 0.92) 100%);
+    border: 1px solid rgba(232, 216, 196, 0.12);
+    border-radius: 30px;
+    padding: 30px;
+    box-shadow: 0 24px 50px rgba(0, 0, 0, 0.22);
+}
+
+.diary-detail-label {
+    display: block;
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    color: rgba(86, 28, 36, 0.82);
+}
+
+.diary-detail-input,
+.diary-detail-select,
+.diary-detail-textarea {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.24);
+    border: 1px solid rgba(199, 183, 163, 0.9);
+    border-radius: 18px;
+    padding: 16px 18px;
+    font-size: 14px;
+    color: #561C24;
+    transition: all 0.25s ease;
+}
+
+.diary-detail-input::placeholder,
+.diary-detail-textarea::placeholder {
+    color: rgba(86, 28, 36, 0.45);
+}
+
+.diary-detail-input:focus,
+.diary-detail-select:focus,
+.diary-detail-textarea:focus {
+    outline: none;
+    border-color: #6D2932;
+    box-shadow: 0 0 0 3px rgba(86, 28, 36, 0.08);
+    background: rgba(255, 255, 255, 0.34);
+}
+
+.diary-detail-textarea {
+    min-height: 420px;
+    resize: vertical;
+    line-height: 1.8;
+}
+
+.diary-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.voice-btn,
+.save-btn,
+.cancel-btn {
+    border: none;
+    border-radius: 999px;
+    padding: 14px 24px;
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.voice-btn {
+    background: rgba(86, 28, 36, 0.08);
+    color: #561C24;
+    border: 1px solid rgba(86, 28, 36, 0.14);
+}
+
+.save-btn {
+    background: #561C24;
+    color: #E8D8C4;
+}
+
+.cancel-btn {
+    background: transparent;
+    color: #561C24;
+    border: 1px solid rgba(86, 28, 36, 0.2);
+}
+
+.voice-btn:hover,
+.save-btn:hover,
+.cancel-btn:hover {
+    transform: translateY(-1px);
+    opacity: 0.94;
+}
+
+.ai-preview-card {
+    border-radius: 24px;
+    padding: 22px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(232, 216, 196, 0.12);
+    min-height: 210px;
+}
+
+.ai-preview-title {
+    color: #E8D8C4;
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    opacity: 0.74;
+}
+
+.ai-preview-body {
+    color: rgba(232, 216, 196, 0.6);
+    line-height: 1.9;
+    font-size: 14px;
+}
+
+@media (max-width: 1024px) {
+    .diary-detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .diary-meta-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .diary-meta-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .diary-detail-panel,
+    .diary-detail-side {
+        padding: 22px;
+    }
+
+    .diary-detail-textarea {
+        min-height: 300px;
     }
 }
