@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 from jose import jwt, JWTError
 from passlib.context import CryptContext
 from app.config import get_settings
+import uuid
 
 settings = get_settings()
 
@@ -27,6 +28,8 @@ def decode_access_token(token: str) -> str | None:
         return payload.get("sub")
     except JWTError:
         return None
+
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -49,10 +52,19 @@ async def get_current_user(
             detail="토큰이 유효하지 않습니다.",
         )
 
-    # User 모델 import (순환참조 방지용 함수 안에서 import)
+    # 문자열 → UUID 객체 변환 (핵심 수정!)
+    try:
+        user_uuid = uuid.UUID(user_id)
+    except (ValueError, AttributeError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="토큰이 유효하지 않습니다.",
+        )
+
+    # 순환참조 방지용 함수 내부 import
     from app.models.user import User
 
-    result = await db.execute(select(User).where(User.id == user_id))
+    result = await db.execute(select(User).where(User.id == user_uuid))
     user = result.scalar_one_or_none()
 
     if not user:
