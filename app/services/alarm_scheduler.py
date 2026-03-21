@@ -26,18 +26,12 @@ async def check_alarms():
 
 def start_scheduler():
     if not scheduler.running:
-        scheduler.add_job(
-            check_alarms,
-            "interval",
-            minutes=1,
-            id="check_alarms_job",
-            replace_existing=True,
-        )
+        scheduler.add_job(check_alarms, "interval", seconds=30)
         scheduler.start()
-        print("[SCHEDULER] started")
+        print("Alarm scheduler started.")
 
 
 def stop_scheduler():
     if scheduler.running:
         scheduler.shutdown()
-        print("[SCHEDULER] stopped")
+        print("Alarm scheduler stopped.")

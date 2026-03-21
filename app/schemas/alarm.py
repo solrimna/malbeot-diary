@@ -10,6 +10,12 @@ class AlarmCreate(BaseModel):
     is_enabled: bool = True
 
 
+class AlarmUpdate(BaseModel):
+    alarm_time: Optional[time] = None
+    repeat_days: Optional[str] = None
+    is_enabled: Optional[bool] = None
+
+
 class AlarmResponse(BaseModel):
     id: int
     user_id: int
