@@ -46,12 +46,14 @@ async def create_diary(
         await feedback_svc.create_feedback(
             db=db,
             diary_id=diary.id,
+            user_id=current_user.id,
             persona_id=diary.persona_id,
             diary_content=diary.content,
             persona_name=persona.name if persona else "말벗",
             preset_type=persona.preset_type if persona else "empathy",
             custom_description=persona.custom_description if persona else None,
         )
+    
     except Exception:
         pass  # 피드백 실패해도 일기 생성은 성공으로 처리
     

@@ -66,6 +66,7 @@ class FeedbackService:
         self,
         db: AsyncSession,
         diary_id: uuid.UUID,
+        user_id: uuid.UUID,
         persona_id: uuid.UUID | None,
         diary_content: str,
         persona_name: str,
@@ -86,12 +87,30 @@ class FeedbackService:
         ):
             full_text += sentence + " "
 
-        # 페르소나 없으면 임시 UUID 사용
-        dummy_persona_id = persona_id or uuid.UUID("00000000-0000-0000-0000-000000000000")
+       # 페르소나 없으면 default 페르소나 조회 또는 생성
+        if not persona_id:
+            from app.models.persona import Persona
+            stmt = select(Persona).where(
+                Persona.user_id == user_id,
+                Persona.name == "기본 말벗",
+            )
+            result = await db.execute(stmt)
+            default_persona = result.scalar_one_or_none()
+
+            if not default_persona:
+                default_persona = Persona(
+                    user_id=user_id,
+                    name="기본 말벗",
+                    preset_type="empathy",
+                )
+                db.add(default_persona)
+                await db.flush()
+
+            persona_id = default_persona.id
 
         feedback = AiFeedback(
             diary_id=diary_id,
-            persona_id=dummy_persona_id,
+            persona_id=persona_id,
             feedback_text=full_text.strip(),
             feedback_type=preset_type or "empathy",
         )
