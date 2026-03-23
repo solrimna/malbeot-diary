@@ -43,7 +43,7 @@ async def create_diary(
             result = await db.execute(sa_select(Persona).where(Persona.id == diary.persona_id))
             persona = result.scalar_one_or_none()
 
-       await feedback_svc.create_feedback(
+        await feedback_svc.create_feedback(
             db=db,
             diary_id=diary.id,
             user_id=current_user.id,
@@ -53,6 +53,7 @@ async def create_diary(
             preset_type=persona.preset_type if persona else "empathy",
             custom_description=persona.custom_description if persona else None,
         )
+    
     except Exception:
         pass  # 피드백 실패해도 일기 생성은 성공으로 처리
     
