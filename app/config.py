@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     # Azure Speech
     AZURE_SPEECH_KEY: str = ""
     AZURE_SPEECH_REGION: str = "koreacentral" 
+   
 
     class Config:
         env_file = ".env"
@@ -30,3 +31,6 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+TEMP_USER_ID = 1
