@@ -101,7 +101,17 @@
 
             <div class="space-y-5">
                 <div>
-                    <label class="persona-label">찾고 싶은 기억</label>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="persona-label translate-x-2 translate-y-6 ">찾고 싶은 기억</label>
+                        <div class="flex flex-col items-end gap-0 -translate-x-4 translate-y-0">
+                            <button type="button" id="voice-btn" class="voice-btn">음성으로 입력</button>
+                            <div class="flex items-center gap-1 text-xs text-[#561C24]/40">
+                                <span>모드:</span>
+                                <button type="button" id="stt-mode-toggle" class="text-xs text-[#561C24]/60 underline underline-offset-2 hover:text-[#561C24] transition-colors bg-transparent border-none cursor-pointer p-0"></button>
+                            </div>
+                            <span id="stt-status" class="hidden text-xs text-[#561C24]/60 text-right max-w-[200px] leading-snug"></span>
+                        </div>
+                    </div>
                     <textarea id="diary-search-input" class="persona-textarea diary-search-textarea" placeholder="예: 친구랑 카페 갔던 날, 비슷한 내용의 일기 찾아줘"></textarea>
                 </div>
 
@@ -118,6 +128,7 @@
 
     <script src="js/frontend.js"></script>
     <script src="js/api.js"></script>
+    <script src="js/stt.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/diary.js"></script>
 </body>
