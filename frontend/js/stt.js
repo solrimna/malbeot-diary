@@ -26,8 +26,11 @@ const stt = (() => {
     }
 
     function appendText(text) {
-        const textarea = document.getElementById("diary-content");
+        const textarea = document.getElementById("diary-content")
+            || document.getElementById("diary-read-content")
+            || document.getElementById("diary-search-input");
         if (!textarea || !text.trim()) return;
+        if (textarea.readOnly) return;
         const current = textarea.value;
         textarea.value = current ? current + " " + text.trim() : text.trim();
     }
@@ -70,6 +73,8 @@ const stt = (() => {
             } else if (data.type === "final") {
                 appendText(data.text);
                 setStatus("");
+            } else if (data.type === "error") {
+                setStatus(data.text);
             }
         };
         ws.onerror = (e) => {
@@ -186,6 +191,20 @@ const stt = (() => {
         if (voiceBtn) voiceBtn.addEventListener("click", toggle);
         if (modeToggle) modeToggle.addEventListener("click", toggleMode);
         updateModeToggle();
+
+        // diary_read.html: 수정 버튼 클릭 시 textarea readonly 상태에 따라 음성 버튼 표시/숨김
+        const editBtn = document.getElementById("diary-edit-button");
+        const voiceBtnWrapper = document.getElementById("voice-btn-wrapper");
+        if (editBtn && voiceBtnWrapper) {
+            editBtn.addEventListener("click", () => {
+                setTimeout(() => {
+                    const content = document.getElementById("diary-read-content");
+                    if (content) {
+                        voiceBtnWrapper.classList.toggle("hidden", content.readOnly);
+                    }
+                }, 0);
+            });
+        }
     }
 
     return { init };
