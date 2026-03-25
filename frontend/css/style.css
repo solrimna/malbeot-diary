@@ -1311,10 +1311,10 @@ html, body {
 }
 
 /* =========================
-   diary_write.html
+   diary_write.html & diary_read.html
 ========================= */
 .page-diary-detail {
-    background-color: #000;
+    background: transparent !important;
     margin: 0;
     padding: 0;
     overflow-x: hidden;
@@ -1331,20 +1331,15 @@ html, body {
     gap: 28px;
 }
 
-.diary-detail-panel {
-    background: linear-gradient(180deg, rgba(232, 216, 196, 0.98) 0%, rgba(231, 220, 201, 0.96) 100%);
-    border: 1px solid rgba(199, 183, 163, 0.45);
-    border-radius: 30px;
-    padding: 30px;
-    box-shadow: 0 24px 50px rgba(0, 0, 0, 0.22);
-}
-
+.diary-detail-panel,
 .diary-detail-side {
-    background: linear-gradient(180deg, rgba(57, 24, 31, 0.8) 0%, rgba(38, 17, 22, 0.92) 100%);
-    border: 1px solid rgba(232, 216, 196, 0.12);
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: 30px;
     padding: 30px;
-    box-shadow: 0 24px 50px rgba(0, 0, 0, 0.22);
+    box-shadow: 0 24px 50px rgba(0, 0, 0, 0.4);
 }
 
 .diary-detail-label {
@@ -1353,34 +1348,34 @@ html, body {
     letter-spacing: 0.18em;
     text-transform: uppercase;
     margin-bottom: 10px;
-    color: rgba(86, 28, 36, 0.82);
+    color: rgba(255, 255, 255, 0.7);
 }
 
 .diary-detail-input,
 .diary-detail-select,
 .diary-detail-textarea {
     width: 100%;
-    background: rgba(255, 255, 255, 0.24);
-    border: 1px solid rgba(199, 183, 163, 0.9);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.25);
     border-radius: 18px;
     padding: 16px 18px;
     font-size: 14px;
-    color: #561C24;
+    color: #ffffff;
     transition: all 0.25s ease;
 }
 
 .diary-detail-input::placeholder,
 .diary-detail-textarea::placeholder {
-    color: rgba(86, 28, 36, 0.45);
+    color: rgba(255, 255, 255, 0.4);
 }
 
 .diary-detail-input:focus,
 .diary-detail-select:focus,
 .diary-detail-textarea:focus {
     outline: none;
-    border-color: #6D2932;
-    box-shadow: 0 0 0 3px rgba(86, 28, 36, 0.08);
-    background: rgba(255, 255, 255, 0.34);
+    border-color: rgba(255, 255, 255, 0.7);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.15);
 }
 
 .diary-detail-textarea {
@@ -1407,51 +1402,54 @@ html, body {
     text-transform: uppercase;
     cursor: pointer;
     transition: all 0.25s ease;
+    backdrop-filter: blur(8px);
 }
 
 .voice-btn {
-    background: rgba(86, 28, 36, 0.08);
-    color: #561C24;
-    border: 1px solid rgba(86, 28, 36, 0.14);
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .save-btn {
-    background: #561C24;
-    color: #E8D8C4;
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.28);
 }
 
 .cancel-btn {
     background: transparent;
-    color: #561C24;
-    border: 1px solid rgba(86, 28, 36, 0.2);
+    color: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .delete-btn {
-    background: #8f2330;
-    color: #E8D8C4;
-    border: 1px solid rgba(143, 35, 48, 0.35);
+    background: rgba(255, 100, 100, 0.15);
+    color: #ffcccc;
+    border: 1px solid rgba(255, 100, 100, 0.3);
 }
 
 .voice-btn:hover,
 .save-btn:hover,
-.cancel-btn:hover,
+.cancel-btn:hover {
+    transform: translateY(-1px);
+    background-color: rgba(255, 255, 255, 0.25);
+}
+
 .delete-btn:hover {
     transform: translateY(-1px);
-    opacity: 0.94;
+    background-color: rgba(255, 100, 100, 0.25);
 }
 
 .ai-preview-card {
     border-radius: 24px;
     padding: 22px;
     background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(232, 216, 196, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     min-height: 210px;
 }
 
-.diary-side-select-card {
-    min-height: auto;
-}
-
+.diary-side-select-card,
 .ai-toggle-card {
     min-height: auto;
 }
@@ -1464,11 +1462,10 @@ html, body {
 }
 
 .ai-toggle-label {
-    color: #E8D8C4;
+    color: rgba(255, 255, 255, 0.8);
     font-size: 12px;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    opacity: 0.82;
 }
 
 .ai-toggle-button {
@@ -1477,7 +1474,7 @@ html, body {
     gap: 10px;
     border: none;
     background: transparent;
-    color: #E8D8C4;
+    color: #ffffff;
     cursor: pointer;
     padding: 0;
 }
@@ -1487,8 +1484,8 @@ html, body {
     width: 50px;
     height: 28px;
     border-radius: 999px;
-    background: rgba(232, 216, 196, 0.22);
-    border: 1px solid rgba(232, 216, 196, 0.24);
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     transition: all 0.25s ease;
 }
 
@@ -1499,12 +1496,13 @@ html, body {
     width: 20px;
     height: 20px;
     border-radius: 999px;
-    background: #E8D8C4;
+    background: #ffffff;
     transition: transform 0.25s ease;
 }
 
 .ai-toggle-button.is-on .ai-toggle-track {
-    background: rgba(232, 216, 196, 0.34);
+    background: rgba(255, 255, 255, 0.35);
+    border-color: rgba(255, 255, 255, 0.5);
 }
 
 .ai-toggle-button.is-on .ai-toggle-thumb {
@@ -1520,10 +1518,10 @@ html, body {
 .ai-manual-summary-button {
     margin-top: 16px;
     width: 100%;
-    border: 1px solid rgba(232, 216, 196, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 16px;
-    background: rgba(232, 216, 196, 0.12);
-    color: #E8D8C4;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
     padding: 12px 16px;
     font-size: 13px;
     letter-spacing: 0.14em;
@@ -1533,7 +1531,7 @@ html, body {
 }
 
 .ai-manual-summary-button:hover {
-    background: rgba(232, 216, 196, 0.18);
+    background: rgba(255, 255, 255, 0.2);
 }
 
 .hidden {
@@ -1541,16 +1539,16 @@ html, body {
 }
 
 .diary-side-label {
-    color: rgba(232, 216, 196, 0.82);
+    color: rgba(255, 255, 255, 0.7);
 }
 
 .diary-side-select {
-    background: rgba(30, 12, 16, 0.55);
-    border-color: rgba(232, 216, 196, 0.15);
-    color: #E8D8C4;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
     appearance: none;
     -webkit-appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23E8D8C4' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none' opacity='0.6'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23ffffff' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none' opacity='0.6'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 16px center;
     padding-right: 40px;
@@ -1558,91 +1556,28 @@ html, body {
 }
 
 .diary-side-select option {
-    background-color: #3a1018;
-    color: #E8D8C4;
-}
-
-.diary-side-select option:checked {
-    background-color: #561C24;
-    color: #E8D8C4;
+    background-color: #1a1a1a;
+    color: #ffffff;
 }
 
 .diary-side-select:focus {
-    border-color: rgba(232, 216, 196, 0.28);
-    box-shadow: 0 0 0 3px rgba(232, 216, 196, 0.06);
-    background-color: rgba(30, 12, 16, 0.72);
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.1);
     outline: none;
 }
 
 .ai-preview-title {
-    color: #E8D8C4;
+    color: #ffffff;
     font-size: 12px;
     letter-spacing: 0.18em;
     text-transform: uppercase;
     margin-bottom: 10px;
-    opacity: 0.74;
+    opacity: 0.7;
 }
 
 .ai-preview-body {
-    color: rgba(232, 216, 196, 0.6);
+    color: rgba(255, 255, 255, 0.8);
     line-height: 1.9;
     font-size: 14px;
-}
-
-@media (max-width: 1024px) {
-    .diary-detail-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .diary-meta-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 768px) {
-    .profile-topbar {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .profile-tabs {
-        width: 100%;
-        justify-content: space-between;
-    }
-
-    .profile-tab-button {
-        flex: 1;
-    }
-
-    .profile-calendar-card,
-    .profile-alarm-card {
-        padding: 22px;
-    }
-
-    .profile-calendar-grid {
-        gap: 8px;
-    }
-
-    .profile-calendar-cell {
-        min-height: 86px;
-        padding: 12px 10px;
-    }
-
-    .profile-alarm-row {
-        grid-template-columns: 1fr;
-        align-items: flex-start;
-    }
-
-    .diary-meta-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .diary-detail-panel,
-    .diary-detail-side {
-        padding: 22px;
-    }
-
-    .diary-detail-textarea {
-        min-height: 300px;
-    }
 }
