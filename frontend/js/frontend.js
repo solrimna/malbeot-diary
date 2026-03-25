@@ -41,6 +41,27 @@ function disableAutocompleteOutsideLogin() {
 }
 
 /* =========================
+   Unicorn Studio Global Init
+========================= */
+function initUnicornStudio() {
+    !function(){var u=window.UnicornStudio;if(u&&u.init){if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",function(){u.init()})}else{u.init()}}else{window.UnicornStudio={isInitialized:!1};var i=document.createElement("script");i.src="https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v2.1.5/dist/unicornStudio.umd.js",i.onload=function(){if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",function(){UnicornStudio.init()})}else{UnicornStudio.init()}},(document.head||document.body).appendChild(i)}}();
+
+    function removeUnicornWatermark() {
+        document.querySelectorAll(
+            'a[href*="unicorn.studio"], a[href*="hiunicornstudio"], ' +
+            '.unicorn-studio-watermark, [class*="unicorn-studio"], [id*="unicorn-studio"]'
+        ).forEach((node) => node.remove());
+    }
+
+    removeUnicornWatermark();
+
+    new MutationObserver(removeUnicornWatermark).observe(document.body, {
+        childList: true,
+        subtree: true,
+    });
+}
+
+/* =========================
    login.html
 ========================= */
 function toggleForm(type) {
@@ -480,6 +501,59 @@ async function initProfilePage() {
     renderProfileCalendar();
 }
 
+function fillNickname() {
+    var el = document.getElementById("profile-nickname");
+    if (!el) return;
+    try {
+        var raw  = localStorage.getItem("auth_user");
+        var user = raw ? JSON.parse(raw) : null;
+        var name = user && user.nickname ? user.nickname.trim() : "";
+        el.textContent = name || "—";
+    } catch (_) {
+        el.textContent = "—";
+    }
+}
+
+function renderAttendance() {
+    var el = document.getElementById("profile-attendance-message");
+    if (!el) return;
+
+    var today     = new Date();
+    var year      = today.getFullYear();
+    var month     = today.getMonth();
+    var todayDate = today.getDate();
+    var written   = 0;
+
+    for (var d = 1; d <= todayDate; d++) {
+        var key =
+            year + "-" +
+            String(month + 1).padStart(2, "0") + "-" +
+            String(d).padStart(2, "0");
+
+        if (typeof profileDiaryDates !== "undefined" && profileDiaryDates.has(key)) {
+            written++;
+        }
+    }
+
+    if (written === todayDate) {
+        el.textContent = "이번달은 하루도 빠짐없이 일기를 썼어요! 🎉";
+        el.classList.add("is-perfect");
+    } else if (written === 0) {
+        el.textContent = "아직 이번달 일기를 작성하지 않았어요.";
+    } else {
+        el.textContent = "이번달에는 " + written + "일이나 일기를 작성했어요!!";
+    }
+}
+
+function waitAndRenderAttendance(tries) {
+    if (tries <= 0) { renderAttendance(); return; }
+    if (typeof profileDiaryDates !== "undefined") {
+        renderAttendance();
+    } else {
+        setTimeout(function () { waitAndRenderAttendance(tries - 1); }, 350);
+    }
+}
+
 /* =========================
    ai-persona.html
 ========================= */
@@ -654,7 +728,7 @@ function initPersonaPage() {
 }
 
 /* =========================
-   my-diary.html Events
+   Global Events (DOMContentLoaded / Resize)
 ========================= */
 window.addEventListener("resize", () => {
     updateDiaryShelfPosition();
@@ -665,6 +739,14 @@ window.addEventListener("DOMContentLoaded", () => {
     disableAutocompleteOutsideLogin();
     initPersonaPage();
     initProfilePage();
+    initUnicornStudio(); // 전역으로 통합된 유니콘 스튜디오 로드 함수 호출
+
+    // profile.html 렌더링 스크립트 실행
+    const body = document.body;
+    if (body && body.classList.contains("page-profile")) {
+        fillNickname();
+        setTimeout(function () { waitAndRenderAttendance(20); }, 1000);
+    }
 
     const shelfWrapper = document.querySelector(".diary-shelf-wrapper");
 
