@@ -340,8 +340,24 @@ async function initDiaryReadPage() {
         }
 
         if (rerollSummaryButton) {
-            rerollSummaryButton.addEventListener("click", () => {
-                window.alert("다시 요약하기 버튼을 추가했습니다.");
+            rerollSummaryButton.addEventListener("click", async () => {
+                rerollSummaryButton.disabled = true;
+                rerollSummaryButton.textContent = "새로운 반응 생성 중...";
+                try {
+                    const newFeedback = await apiRequest(
+                        `/feedback/${encodeURIComponent(diaryId)}/regenerate`,
+                        { method: "PUT" }
+                    );
+                    const reviewEl = document.getElementById("diary-read-review");
+                    if (reviewEl && newFeedback.feedback_text) {
+                        reviewEl.textContent = newFeedback.feedback_text;
+                    }
+                } catch (_) {
+                    window.alert("새로운 반응을 가져오지 못했어요. 다시 시도해주세요.");
+                } finally {
+                    rerollSummaryButton.disabled = false;
+                    rerollSummaryButton.textContent = "반응이 마음에 안드시면 여기를 눌러주세요!";
+                }
             });
         }
 
