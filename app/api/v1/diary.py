@@ -95,11 +95,14 @@ async def update_diary(
             result = await db.execute(sa_select(Persona).where(Persona.id == updated_diary.persona_id))
             persona = result.scalar_one_or_none()
 
-        # 기존 피드백 삭제
-        existing = await feedback_svc.get_feedback(db, diary_id)
-        if existing:
-            await db.delete(existing)
-            await db.commit()
+        # 내용이 변경됐을 때만 피드백 재생성
+        if body.content is not None:
+            existing = await feedback_svc.get_feedback(db, diary_id)
+            if existing:
+                await db.delete(existing)
+                await db.commit()
+        else:
+            return updated_diary  # 내용 변경 없으면 피드백 재생성 안 함
 
         # 새 피드백 생성
         await feedback_svc.create_feedback(
