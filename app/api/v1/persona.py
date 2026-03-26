@@ -42,7 +42,7 @@ async def list_personas(
                 is_active=preset.get("is_active", False),
             ))
     await db.commit()
-    
+
     stmt = select(Persona).where(Persona.user_id == current_user.id)
     result = await db.execute(stmt)
     return result.scalars().all()
