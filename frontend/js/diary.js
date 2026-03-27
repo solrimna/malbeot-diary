@@ -71,8 +71,8 @@ function renderHashtags(hashtags, showEmpty = false) {
     wrapper.innerHTML = "";
     if (!hashtags || !hashtags.length) {
         if (showEmpty) {
-            const msg = document.createElement("span");
-            msg.className = "text-sm text-white/40";
+            const msg = document.createElement("p");
+            msg.className = "text-sm text-white/40 italic w-full";
             msg.textContent = "해시태그를 생성할 수 없었어요.";
             wrapper.appendChild(msg);
         }
