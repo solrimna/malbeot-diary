@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from app.api.v1.router import api_router
+from app.database import init_db
 from app.services.alarm_scheduler import start_scheduler, stop_scheduler
 
 logging.basicConfig(level=logging.INFO)
@@ -14,6 +15,7 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("앱 시작")
+    await init_db()
     start_scheduler()
     yield
     stop_scheduler()
@@ -22,7 +24,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="말벗 AI 일기장",
-    description="음성 입력 + AI 공감 피드백 일기 서비스",
+    description="음성 입력과 AI 공감 피드백을 제공하는 일기 서비스",
     version="0.1.0",
     lifespan=lifespan,
 )
