@@ -757,17 +757,27 @@ function renderPersonaCard(persona) {
 
     const { tone, style } = parsePersonaDescription(persona.custom_description);
     const card = document.createElement("div");
-    card.className = "persona-card";
+    card.className = `persona-card${persona.is_active ? " is-default" : ""}`;
     card.dataset.personaId = persona.id;
     card.dataset.name = persona.name;
     card.dataset.tone = tone;
     card.dataset.style = style;
 
+    const defaultBadge = persona.is_active
+        ? `<span class="persona-default-badge">기본 페르소나</span>`
+        : "";
+    const defaultBtn = persona.is_active
+        ? ""
+        : `<button type="button" class="persona-default-btn" onclick="setDefaultPersona(this)">기본으로 설정</button>`;
+
     card.innerHTML = `
         <details class="persona-card-details">
             <summary class="persona-card-summary-row">
                 <span class="persona-card-title">${escapeHtml(persona.name)}</span>
-                <span class="persona-card-arrow">▼</span>
+                <span class="persona-card-summary-right">
+                    ${defaultBadge}
+                    <span class="persona-card-arrow">▼</span>
+                </span>
             </summary>
             <div class="persona-card-content">
                 <div class="persona-meta">
@@ -781,6 +791,7 @@ function renderPersonaCard(persona) {
                     </div>
                 </div>
                 <div class="persona-card-actions">
+                    ${defaultBtn}
                     <button type="button" class="persona-edit-btn" onclick="editPersona(this)">수정</button>
                     <button type="button" class="persona-delete-btn" onclick="deletePersona(this)">삭제</button>
                 </div>
@@ -789,6 +800,54 @@ function renderPersonaCard(persona) {
     `;
 
     personaList.prepend(card);
+}
+
+async function setDefaultPersona(button) {
+    const card = button.closest(".persona-card");
+    const personaId = card?.dataset.personaId;
+    if (!card || !personaId || typeof apiRequest !== "function") return;
+
+    try {
+        await apiRequest(`/personas/${encodeURIComponent(personaId)}`, {
+            method: "PATCH",
+            body: getJsonBody({ is_active: true }),
+        });
+
+        // 모든 카드에서 기본 상태 제거
+        const personaList = document.getElementById("persona-list");
+
+        document.querySelectorAll(".persona-card").forEach((c) => {
+            c.classList.remove("is-default");
+            const rightEl = c.querySelector(".persona-card-summary-right");
+            const badge = rightEl?.querySelector(".persona-default-badge");
+            if (badge) badge.remove();
+
+            const actions = c.querySelector(".persona-card-actions");
+            if (!actions) return;
+            const existingBtn = actions.querySelector(".persona-default-btn");
+
+            if (c === card) {
+                c.classList.add("is-default");
+                if (rightEl) rightEl.insertAdjacentHTML("afterbegin", `<span class="persona-default-badge">기본 페르소나</span>`);
+                if (existingBtn) existingBtn.remove();
+            } else {
+                if (!existingBtn) {
+                    const editBtn = actions.querySelector(".persona-edit-btn");
+                    const newBtn = document.createElement("button");
+                    newBtn.type = "button";
+                    newBtn.className = "persona-default-btn";
+                    newBtn.textContent = "기본으로 설정";
+                    newBtn.setAttribute("onclick", "setDefaultPersona(this)");
+                    actions.insertBefore(newBtn, editBtn);
+                }
+            }
+        });
+
+        // 기본 페르소나 카드를 목록 최상단으로
+        if (personaList) personaList.prepend(card);
+    } catch (error) {
+        alert(error.message || "기본 페르소나 설정에 실패했어요.");
+    }
 }
 
 function renderPersonaEmpty() {
