@@ -61,6 +61,25 @@ async function fetchDiary(diaryId) {
     return apiRequest(`/diaries/${encodeURIComponent(diaryId)}`, { method: "GET" });
 }
 
+async function fetchDiaryHashtags(diaryId) {
+    return apiRequest(`/diaries/${encodeURIComponent(diaryId)}/hashtags`, { method: "GET" });
+}
+
+function renderHashtags(hashtags) {
+    const wrapper = document.getElementById("diary-hashtag-wrapper");
+    if (!wrapper) return;
+
+    wrapper.innerHTML = "";
+    if (!hashtags || !hashtags.length) return;
+
+    hashtags.forEach((tag) => {
+        const span = document.createElement("span");
+        span.className = "px-3 py-1 rounded-full text-sm text-white/80 border border-white/20 bg-white/10";
+        span.textContent = `#${escapeHtml(tag)}`;
+        wrapper.appendChild(span);
+    });
+}
+
 async function createDiary(payload) {
     return apiRequest("/diaries/", {
         method: "POST",
@@ -275,6 +294,15 @@ async function initDiaryReadPage() {
         weatherEl.value = diary.weather || "";
         titleEl.value = diary.title || "";
         contentEl.value = diary.content || "";
+
+        // 해시태그 로드
+        try {
+            const hashtagData = await fetchDiaryHashtags(diaryId);
+            renderHashtags(hashtagData.hashtags || []);
+        } catch (_) {
+            // 해시태그 없어도 페이지 정상 표시
+        }
+        
         await populatePersonaSelect(personaSelect, diary.persona_id || "");
         setDiaryReadOnly(fields, true);
 
