@@ -237,6 +237,21 @@
         </div>
     </main>
 
+    <div id="alarm-toast-container" class="alarm-toast-container" aria-live="polite" aria-atomic="true"></div>
+
+    <div id="alarm-confirm-modal" class="alarm-feedback-modal hidden" role="dialog" aria-modal="true" aria-labelledby="alarm-confirm-title">
+        <div class="alarm-feedback-backdrop" data-alarm-confirm-close="backdrop"></div>
+        <div class="alarm-feedback-card">
+            <p class="profile-calendar-caption">Alarm</p>
+            <h3 id="alarm-confirm-title" class="alarm-feedback-title">알람 확인</h3>
+            <p id="alarm-confirm-message" class="alarm-feedback-message">정말 진행할까요?</p>
+            <div class="alarm-feedback-actions">
+                <button type="button" id="alarm-confirm-cancel-btn" class="profile-calendar-nav">취소</button>
+                <button type="button" id="alarm-confirm-ok-btn" class="profile-calendar-nav is-danger">확인</button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/api.js"></script>
     <script src="js/frontend.js"></script>
     <script src="js/auth.js"></script>

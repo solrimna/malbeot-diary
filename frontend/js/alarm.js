@@ -1,22 +1,26 @@
-// 담당: 정원님 - 알람 및 Web Push 관련 기능
+// 담당: 김정원 - 알람 및 Web Push 관련 기능
 
 function populateAlarmTimeSelects() {
   const hourSelect = document.getElementById("alarm-hour");
   const minuteSelect = document.getElementById("alarm-minute");
   if (!hourSelect || !minuteSelect) return;
 
-  for (let h = 1; h <= 12; h++) {
-    const opt = document.createElement("option");
-    opt.value = String(h);
-    opt.textContent = h + "시";
-    hourSelect.appendChild(opt);
+  if (!hourSelect.options.length) {
+    for (let h = 1; h <= 12; h++) {
+      const opt = document.createElement("option");
+      opt.value = String(h);
+      opt.textContent = `${h}시`;
+      hourSelect.appendChild(opt);
+    }
   }
 
-  for (let m = 0; m <= 59; m++) {
-    const opt = document.createElement("option");
-    opt.value = String(m).padStart(2, "0");
-    opt.textContent = String(m).padStart(2, "0") + "분";
-    minuteSelect.appendChild(opt);
+  if (!minuteSelect.options.length) {
+    for (let m = 0; m <= 59; m++) {
+      const opt = document.createElement("option");
+      opt.value = String(m).padStart(2, "0");
+      opt.textContent = `${String(m).padStart(2, "0")}분`;
+      minuteSelect.appendChild(opt);
+    }
   }
 
   initCustomSelect(document.getElementById("alarm-ampm"));
@@ -26,7 +30,7 @@ function populateAlarmTimeSelects() {
 
 function getAlarmTimeValue() {
   const ampm = document.getElementById("alarm-ampm")?.value;
-  const hourRaw = parseInt(document.getElementById("alarm-hour")?.value || "0");
+  const hourRaw = parseInt(document.getElementById("alarm-hour")?.value || "0", 10);
   const minute = document.getElementById("alarm-minute")?.value || "00";
 
   if (!ampm || !hourRaw) return null;
@@ -40,7 +44,7 @@ function getAlarmTimeValue() {
 
 function setAlarmTimeSelects(timeStr) {
   const [hhStr, mmStr] = timeStr.split(":");
-  const hh = parseInt(hhStr);
+  const hh = parseInt(hhStr, 10);
 
   const ampm = hh < 12 ? "AM" : "PM";
   const hour12 = hh % 12 === 0 ? 12 : hh % 12;
@@ -55,9 +59,15 @@ function setAlarmTimeSelects(timeStr) {
 }
 
 const DAY_KOR = {
-  MON: "월요일", TUE: "화요일", WED: "수요일",
-  THU: "목요일", FRI: "금요일", SAT: "토요일", SUN: "일요일",
+  MON: "월요일",
+  TUE: "화요일",
+  WED: "수요일",
+  THU: "목요일",
+  FRI: "금요일",
+  SAT: "토요일",
+  SUN: "일요일",
 };
+
 const ALL_DAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
 function formatDaysKorean(repeatDaysStr) {
@@ -69,17 +79,147 @@ function formatDaysKorean(repeatDaysStr) {
 
 function getAccessToken() {
   const inputEl = document.getElementById("token-input");
-  // test/alarm.html 테스트 편하려고 만든 부분, 다른데서는 사용X
   if (inputEl && inputEl.value.trim()) {
     return inputEl.value.trim();
   }
   return localStorage.getItem("access_token");
 }
 
-// 이미 표시한 알림 중복 방지용 저장소
+function showAlarmToast(message, type = "info", title = "Alarm") {
+  if (typeof window.showAppToast === "function") {
+    window.showAppToast(message, type, title);
+    return;
+  }
+
+  const container = document.getElementById("alarm-toast-container");
+  if (!container) return;
+
+  const toast = document.createElement("div");
+  toast.className = `alarm-toast is-${type}`;
+  toast.setAttribute("role", "status");
+  toast.innerHTML = `
+    <div class="alarm-toast-title">${title}</div>
+    <div class="alarm-toast-message">${message}</div>
+  `;
+
+  container.appendChild(toast);
+
+  requestAnimationFrame(() => {
+    toast.classList.add("show");
+  });
+
+  let removed = false;
+  const removeToast = () => {
+    if (removed) return;
+    removed = true;
+    toast.classList.remove("show");
+    window.setTimeout(() => toast.remove(), 220);
+  };
+
+  window.setTimeout(removeToast, 3000);
+}
+
+function showAlarmConfirm(message, title = "알람 확인") {
+  if (typeof window.showAppConfirm === "function") {
+    return window.showAppConfirm(message, title);
+  }
+
+  const modal = document.getElementById("alarm-confirm-modal");
+  const messageEl = document.getElementById("alarm-confirm-message");
+  const titleEl = document.getElementById("alarm-confirm-title");
+  const confirmBtn = document.getElementById("alarm-confirm-ok-btn");
+  const cancelBtn = document.getElementById("alarm-confirm-cancel-btn");
+  const backdrop = modal?.querySelector("[data-alarm-confirm-close='backdrop']");
+
+  if (!modal || !messageEl || !titleEl || !confirmBtn || !cancelBtn || !backdrop) {
+    return Promise.resolve(window.confirm(message));
+  }
+
+  messageEl.textContent = message;
+  titleEl.textContent = title;
+  modal.classList.remove("hidden");
+
+  return new Promise((resolve) => {
+    const cleanup = () => {
+      modal.classList.add("hidden");
+      confirmBtn.removeEventListener("click", handleConfirm);
+      cancelBtn.removeEventListener("click", handleCancel);
+      backdrop.removeEventListener("click", handleCancel);
+      document.removeEventListener("keydown", handleKeydown);
+    };
+
+    const handleConfirm = () => {
+      cleanup();
+      resolve(true);
+    };
+
+    const handleCancel = () => {
+      cleanup();
+      resolve(false);
+    };
+
+    const handleKeydown = (event) => {
+      if (event.key === "Escape") {
+        handleCancel();
+      }
+    };
+
+    confirmBtn.addEventListener("click", handleConfirm);
+    cancelBtn.addEventListener("click", handleCancel);
+    backdrop.addEventListener("click", handleCancel);
+    document.addEventListener("keydown", handleKeydown);
+    confirmBtn.focus();
+  });
+}
+
+function getFriendlyAlarmError(error, fallbackMessage) {
+  if (error instanceof TypeError && /fetch/i.test(error.message || "")) {
+    return "서버에 연결하지 못했습니다. 백엔드가 실행 중인지 확인해주세요.";
+  }
+  return error?.message || fallbackMessage;
+}
+
+async function alarmApiRequest(path, options = {}, fallbackMessage = "알람 요청에 실패했습니다.") {
+  try {
+    if (typeof apiRequest === "function") {
+      return await apiRequest(path, options);
+    }
+
+    const token = getAccessToken();
+    const response = await fetch(`/api/v1${path}`, {
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(options.headers || {}),
+      },
+      ...options,
+    });
+
+    if (response.status === 204) {
+      return null;
+    }
+
+    const contentType = response.headers.get("content-type") || "";
+    const rawText = await response.text();
+    const payload = contentType.includes("application/json") && rawText
+      ? JSON.parse(rawText)
+      : rawText;
+
+    if (!response.ok) {
+      const detail = typeof payload === "object" && payload !== null
+        ? payload.detail
+        : payload;
+      throw new Error(detail || fallbackMessage);
+    }
+
+    return payload;
+  } catch (error) {
+    throw new Error(getFriendlyAlarmError(error, fallbackMessage));
+  }
+}
+
 const shownAlarmMap = new Map();
 
-// 브라우저 알림 권한 요청
 async function requestAlarmNotificationPermission() {
   if (!("Notification" in window)) return;
 
@@ -92,11 +232,15 @@ async function requestAlarmNotificationPermission() {
   }
 }
 
-// 선택된 요일 목록 반환
 function getSelectedRepeatDays() {
   const dayIdMap = {
-    MON: "day-mon", TUE: "day-tue", WED: "day-wed",
-    THU: "day-thu", FRI: "day-fri", SAT: "day-sat", SUN: "day-sun",
+    MON: "day-mon",
+    TUE: "day-tue",
+    WED: "day-wed",
+    THU: "day-thu",
+    FRI: "day-fri",
+    SAT: "day-sat",
+    SUN: "day-sun",
   };
 
   return Object.entries(dayIdMap)
@@ -104,7 +248,6 @@ function getSelectedRepeatDays() {
     .map(([day]) => day);
 }
 
-// 매일 버튼 ↔ 개별 요일 버튼 연동
 function setupDayAllToggle() {
   const allBtn = document.getElementById("day-all");
   const dayIds = ALL_DAYS.map((d) => `day-${d.toLowerCase()}`);
@@ -123,13 +266,14 @@ function setupDayAllToggle() {
     if (!btn) return;
     btn.addEventListener("click", () => {
       btn.classList.toggle("is-active");
-      allBtn.classList.toggle("is-active", dayIds.every((i) => document.getElementById(i)?.classList.contains("is-active")));
+      allBtn.classList.toggle(
+        "is-active",
+        dayIds.every((i) => document.getElementById(i)?.classList.contains("is-active"))
+      );
     });
   });
 }
 
-// 일반 브라우저 알림 표시
-// 폴링 방식, 호출안되게 상위에서 주석처리되어있음 : checkDueAlarmsForNotification (폴링) > showAlarmNotification
 function showAlarmNotification(alarm) {
   if (!("Notification" in window)) return;
   if (Notification.permission !== "granted") return;
@@ -137,7 +281,6 @@ function showAlarmNotification(alarm) {
   const now = Date.now();
   const lastShownAt = shownAlarmMap.get(alarm.id);
 
-  // 1분 안에 같은 알람 다시 띄우지 않음
   if (lastShownAt && now - lastShownAt < 60000) {
     return;
   }
@@ -154,13 +297,24 @@ function showAlarmNotification(alarm) {
   };
 }
 
-// 현재 수정 중인 알람 ID (null이면 신규 생성 모드)
 let editingAlarmId = null;
 
 function showAlarmListView() {
   document.getElementById("alarm-view-list")?.classList.remove("hidden");
   document.getElementById("alarm-view-form")?.classList.add("hidden");
   editingAlarmId = null;
+}
+
+function resetAlarmForm() {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2, "0");
+  const mm = String(now.getMinutes()).padStart(2, "0");
+  setAlarmTimeSelects(`${hh}:${mm}`);
+
+  ALL_DAYS.forEach((d) => {
+    document.getElementById(`day-${d.toLowerCase()}`)?.classList.remove("is-active");
+  });
+  document.getElementById("day-all")?.classList.remove("is-active");
 }
 
 function showAlarmFormView(mode) {
@@ -171,22 +325,10 @@ function showAlarmFormView(mode) {
   if (title) title.textContent = mode === "edit" ? "알람 수정" : "알람 추가";
 
   if (mode === "create") {
-    const now = new Date();
-    const hh = String(now.getHours()).padStart(2, "0");
-    const mm = String(now.getMinutes()).padStart(2, "0");
-    setAlarmTimeSelects(`${hh}:${mm}`);
-
-    ALL_DAYS.forEach((d) => {
-      document.getElementById(`day-${d.toLowerCase()}`)?.classList.remove("is-active");
-    });
-    document.getElementById("day-all")?.classList.remove("is-active");
-
-    const enabledCb = document.getElementById("alarm-enabled");
-    if (enabledCb) enabledCb.checked = true;
+    resetAlarmForm();
   }
 }
 
-// 알람 목록 화면 렌더링
 function renderAlarmList(alarms) {
   const alarmListEl = document.getElementById("alarm-list");
   if (!alarmListEl) return;
@@ -203,7 +345,7 @@ function renderAlarmList(alarms) {
     item.className = "profile-alarm-row";
 
     const korDays = formatDaysKorean(alarm.repeat_days);
-    const timeDisplay = alarm.alarm_time.slice(0, 5);
+    const timeDisplay = String(alarm.alarm_time).slice(0, 5);
 
     item.innerHTML = `
       <div>
@@ -220,134 +362,119 @@ function renderAlarmList(alarms) {
     alarmListEl.appendChild(item);
   });
 
-  // 수정 버튼 이벤트 등록
   alarmListEl.querySelectorAll(".edit-alarm-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
-      const alarmId = parseInt(btn.dataset.alarmId);
+      const alarmId = parseInt(btn.dataset.alarmId, 10);
       const alarm = alarms.find((a) => a.id === alarmId);
       if (alarm) fillFormForEdit(alarm);
     });
   });
 
-  // 삭제 버튼 이벤트 등록
   alarmListEl.querySelectorAll(".delete-alarm-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
-      const alarmId = parseInt(btn.dataset.alarmId);
+      const alarmId = parseInt(btn.dataset.alarmId, 10);
       deleteAlarm(alarmId);
     });
   });
 }
 
-// 폼에 기존 알람 데이터를 채우고 수정 모드로 전환
 function fillFormForEdit(alarm) {
   editingAlarmId = alarm.id;
+  setAlarmTimeSelects(String(alarm.alarm_time).slice(0, 5));
 
-  setAlarmTimeSelects(alarm.alarm_time.slice(0, 5));
+  const dayIdMap = {
+    MON: "day-mon",
+    TUE: "day-tue",
+    WED: "day-wed",
+    THU: "day-thu",
+    FRI: "day-fri",
+    SAT: "day-sat",
+    SUN: "day-sun",
+  };
 
-  // 요일 버튼 상태 설정
-  const dayIdMap = { MON: "day-mon", TUE: "day-tue", WED: "day-wed", THU: "day-thu", FRI: "day-fri", SAT: "day-sat", SUN: "day-sun" };
-  const activeDays = alarm.repeat_days ? alarm.repeat_days.split(",").map((d) => d.trim()) : [];
+  const activeDays = alarm.repeat_days
+    ? alarm.repeat_days.split(",").map((d) => d.trim())
+    : [];
 
   ALL_DAYS.forEach((day) => {
     const btn = document.getElementById(dayIdMap[day]);
     if (btn) btn.classList.toggle("is-active", activeDays.includes(day));
   });
 
-  // 매일 버튼 상태 동기화
   const allBtn = document.getElementById("day-all");
   if (allBtn) allBtn.classList.toggle("is-active", activeDays.length === 7);
-
-  const alarmEnabledInput = document.getElementById("alarm-enabled");
-  if (alarmEnabledInput) alarmEnabledInput.checked = alarm.is_enabled;
 
   showAlarmFormView("edit");
 }
 
-// 알람 목록 조회
 async function loadAlarms() {
   const token = getAccessToken();
-  console.log("loadAlarms token:", token);
-
   if (!token) {
-    alert("로그인이 필요합니다.");
+    showAlarmToast("로그인이 필요합니다.", "error", "알람");
     return;
   }
 
   try {
-    const response = await fetch("/api/v1/alarms/", {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/json",
-      },
-    });
-
-    console.log("loadAlarms status:", response.status);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`알람 목록 조회 실패: ${response.status} / ${errorText}`);
-    }
-
-    const alarms = await response.json();
-    console.log("알람 목록:", alarms);
-
+    const alarms = await alarmApiRequest(
+      "/alarms/",
+      { method: "GET" },
+      "알람 목록을 불러오지 못했습니다."
+    );
     renderAlarmList(alarms);
   } catch (error) {
     console.error("알람 목록 조회 실패", error);
-    alert("알람 목록을 불러오지 못했습니다.");
+    showAlarmToast(
+      getFriendlyAlarmError(error, "알람 목록을 불러오지 못했습니다."),
+      "error",
+      "불러오기 실패"
+    );
   }
 }
 
-// 알람 삭제
 async function deleteAlarm(alarmId) {
-  if (!confirm("알람을 삭제할까요?")) return;
+  const confirmed = await showAlarmConfirm("알람을 삭제할까요?", "알람 삭제");
+  if (!confirmed) return;
 
   const token = getAccessToken();
   if (!token) {
-    alert("로그인이 필요합니다.");
+    showAlarmToast("로그인이 필요합니다.", "error", "알람");
     return;
   }
 
   try {
-    const response = await fetch(`/api/v1/alarms/${alarmId}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`알람 삭제 실패: ${response.status} / ${errorText}`);
-    }
-
+    await alarmApiRequest(
+      `/alarms/${alarmId}`,
+      { method: "DELETE" },
+      "알람 삭제에 실패했습니다."
+    );
     await loadAlarms();
+    showAlarmToast("알람이 삭제되었습니다.", "success", "삭제 완료");
   } catch (error) {
     console.error("알람 삭제 실패:", error);
-    alert("알람 삭제에 실패했습니다.");
+    showAlarmToast(
+      getFriendlyAlarmError(error, "알람 삭제에 실패했습니다."),
+      "error",
+      "삭제 실패"
+    );
   }
 }
 
-// 알람 저장 (신규: POST / 수정: PUT)
 async function saveAlarm() {
   const token = getAccessToken();
   if (!token) {
-    alert("로그인이 필요합니다.");
+    showAlarmToast("로그인이 필요합니다.", "error", "알람");
     return;
   }
 
   const alarmTime = getAlarmTimeValue();
   if (!alarmTime) {
-    alert("알람 시간을 선택해주세요.");
+    showAlarmToast("알람 시간을 선택해주세요.", "info", "입력 확인");
     return;
   }
 
   const repeatDays = getSelectedRepeatDays();
-
   if (repeatDays.length === 0) {
-    alert("반복 요일을 하나 이상 선택해주세요.");
+    showAlarmToast("반복 요일을 하나 이상 선택해주세요.", "info", "입력 확인");
     return;
   }
 
@@ -358,37 +485,35 @@ async function saveAlarm() {
   };
 
   const isEditMode = editingAlarmId !== null;
-  const url = isEditMode ? `/api/v1/alarms/${editingAlarmId}` : "/api/v1/alarms/";
-  const method = isEditMode ? "PUT" : "POST";
 
   try {
-    const response = await fetch(url, {
-      method,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        Accept: "application/json",
+    await alarmApiRequest(
+      isEditMode ? `/alarms/${editingAlarmId}` : "/alarms/",
+      {
+        method: isEditMode ? "PUT" : "POST",
+        body: getJsonBody(body),
       },
-      body: JSON.stringify(body),
-    });
+      isEditMode ? "알람 수정에 실패했습니다." : "알람 저장에 실패했습니다."
+    );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`알람 ${isEditMode ? "수정" : "저장"} 실패: ${response.status} / ${errorText}`);
-    }
-
-    await response.json();
-    alert(isEditMode ? "알람이 수정되었습니다." : "알람이 저장되었습니다.");
+    showAlarmToast(
+      isEditMode ? "알람이 수정되었습니다." : "알람이 저장되었습니다.",
+      "success",
+      isEditMode ? "수정 완료" : "저장 완료"
+    );
 
     showAlarmListView();
     await loadAlarms();
   } catch (error) {
     console.error("알람 저장/수정 실패:", error);
-    alert("알람 저장에 실패했습니다.");
+    showAlarmToast(
+      getFriendlyAlarmError(error, "알람 저장에 실패했습니다."),
+      "error",
+      "저장 실패"
+    );
   }
 }
 
-// 웹 푸시용 VAPID 공개키를 Uint8Array 형태로 변환
 function urlBase64ToUint8Array(base64String) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding)
@@ -405,7 +530,6 @@ function urlBase64ToUint8Array(base64String) {
   return outputArray;
 }
 
-// Service Worker를 등록하고 registration 객체를 반환
 async function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return null;
 
@@ -419,26 +543,23 @@ async function registerServiceWorker() {
   }
 }
 
-// 브라우저를 푸시 구독 상태로 만들고, 구독 정보를 서버에 저장
 async function subscribePush(registration) {
   try {
     const token = getAccessToken();
+    if (!token) return;
 
-    if (!token) {
-      console.warn("access_token이 없습니다. 로그인 후 재시도 필요.");
-      return;
-    }
+    const keyData = await alarmApiRequest(
+      "/alarms/push/public-key",
+      { method: "GET" },
+      "푸시 공개키를 불러오지 못했습니다."
+    );
 
-    const keyResponse = await fetch("/api/v1/alarms/push/public-key");
-    const keyData = await keyResponse.json();
-    const publicKey = keyData.publicKey;
-
+    const publicKey = keyData?.publicKey;
     if (!publicKey) {
-      console.error("VAPID 공개키가 없습니다.");
+      console.warn("VAPID 공개키가 없어 푸시 구독을 건너뜁니다.");
       return;
     }
 
-    // 기존 구독 해제 후 새로 등록 (VAPID 키 변경 시 403 방지)
     const existing = await registration.pushManager.getSubscription();
     if (existing) {
       await existing.unsubscribe();
@@ -449,54 +570,32 @@ async function subscribePush(registration) {
       applicationServerKey: urlBase64ToUint8Array(publicKey),
     });
 
-    const response = await fetch("/api/v1/alarms/push/subscribe", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        Accept: "application/json",
+    await alarmApiRequest(
+      "/alarms/push/subscribe",
+      {
+        method: "POST",
+        body: JSON.stringify(subscription),
       },
-      body: JSON.stringify(subscription),
-    });
-
-    if (!response.ok) {
-      console.error("Push 구독 저장 실패", await response.text());
-      return;
-    }
-
-    console.log("Push 구독 저장 성공");
+      "푸시 구독 저장에 실패했습니다."
+    );
   } catch (error) {
     console.error("Push 구독 실패:", error);
   }
 }
 
-// 기존 due 알람 조회 방식
-// 현재는 웹 푸시가 핵심이지만, 보조 확인용으로 유지 => 호출부 주석처리됨 (호출 X)
-// 폴링 방식, 호출안되게 상위에서 주석처리되어있음 : checkDueAlarmsForNotification (폴링) > showAlarmNotification
 async function checkDueAlarmsForNotification() {
   const token = getAccessToken();
   if (!token) return;
 
   try {
-    const response = await fetch("/api/v1/alarms/due", {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/json",
-      },
-    });
+    const data = await alarmApiRequest(
+      "/alarms/due",
+      { method: "GET" },
+      "알람 상태를 확인하지 못했습니다."
+    );
 
-    if (!response.ok) {
-      console.error("due 알람 조회 실패:", response.status);
-      return;
-    }
-
-    const data = await response.json();
-    if (!data.items || data.items.length === 0) return;
-
-    data.items.forEach((alarm) => {
-      showAlarmNotification(alarm);
-    });
+    if (!data?.items?.length) return;
+    data.items.forEach((alarm) => showAlarmNotification(alarm));
   } catch (error) {
     console.error("due 알람 조회 실패:", error);
   }
@@ -519,9 +618,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("cancel-alarm-btn")?.addEventListener("click", showAlarmListView);
 
   await loadAlarms();
-  // 폴링 방식 주석처리 - web push 동작만 사용하도록 변경
   // await checkDueAlarmsForNotification();
-
   // setInterval(() => {
   //   checkDueAlarmsForNotification();
   // }, 30000);
