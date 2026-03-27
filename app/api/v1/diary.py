@@ -116,6 +116,42 @@ async def get_diary_hashtags(
     hashtags = result.scalars().all()
     return {"hashtags": [tag.name for tag in hashtags]}
 
+# ── DELETE /diaries/{diary_id}/hashtags/{tag_name} ─ 해시태그 삭제
+@router.delete("/{diary_id}/hashtags/{tag_name}", status_code=204)
+async def delete_diary_hashtag(
+    diary_id: uuid.UUID,
+    tag_name: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    diary = await diary_svc.get_diary(db, diary_id, current_user.id)
+    if not diary:
+        raise HTTPException(status_code=404, detail="일기를 찾을 수 없습니다.")
+
+    from app.models.hashtag import Hashtag, DiaryHashtag
+    from sqlalchemy import select as sa_select
+
+    # 해시태그 조회
+    stmt = (
+        sa_select(Hashtag)
+        .where(Hashtag.user_id == current_user.id, Hashtag.name == tag_name)
+    )
+    result = await db.execute(stmt)
+    hashtag = result.scalar_one_or_none()
+    if not hashtag:
+        raise HTTPException(status_code=404, detail="해시태그를 찾을 수 없습니다.")
+
+    # 일기-태그 연결 삭제
+    stmt_link = sa_select(DiaryHashtag).where(
+        DiaryHashtag.diary_id == diary_id,
+        DiaryHashtag.hashtag_id == hashtag.id,
+    )
+    result_link = await db.execute(stmt_link)
+    link = result_link.scalar_one_or_none()
+    if link:
+        await db.delete(link)
+        await db.commit()
+
 # ── PATCH /diaries/{diary_id} ─ 수정 ────────────
 @router.patch("/{diary_id}", response_model=DiaryResponse)
 async def update_diary(
