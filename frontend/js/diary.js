@@ -80,10 +80,35 @@ function renderHashtags(hashtags, showEmpty = false) {
     }
     hashtags.forEach((tag) => {
         const span = document.createElement("span");
-        span.className = "px-3 py-1 rounded-full text-sm text-white/80 border border-white/20 bg-white/10";
-        span.textContent = `#${escapeHtml(tag)}`;
+        span.className = "group relative px-3 py-1 rounded-full text-sm text-white/80 border border-white/20 bg-white/10 cursor-pointer hover:border-white/50 transition-all";
+        span.innerHTML = `
+            <span class="tag-text">#${escapeHtml(tag)}</span>
+            <button type="button"
+                class="tag-delete hidden group-hover:inline-block ml-1 text-white/50 hover:text-white text-xs font-bold"
+                onclick="removeHashtag(this, '${escapeHtml(tag)}')">✕</button>
+        `;
+        
         wrapper.appendChild(span);
     });
+}
+
+async function removeHashtag(button, tagName) {
+    const span = button.closest("span");
+    if (!span) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const diaryId = params.get("id");
+    if (!diaryId) return;
+
+    try {
+        await apiRequest(
+            `/diaries/${encodeURIComponent(diaryId)}/hashtags/${encodeURIComponent(tagName)}`,
+            { method: "DELETE" }
+        );
+        span.remove();
+    } catch (_) {
+        window.alert("해시태그 삭제에 실패했어요.");
+    }
 }
 
 async function createDiary(payload) {
