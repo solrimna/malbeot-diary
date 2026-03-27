@@ -286,6 +286,25 @@ function initIconSelect(wrapperId, options, hiddenInputId) {
     });
 }
 
+function setIconSelectValue(wrapperId, options, label) {
+    const wrapper = document.getElementById(wrapperId);
+    if (!wrapper) return;
+    const opt = options.find(o => o.label === label);
+    if (!opt) return;
+    wrapper.querySelector(".diary-icon-select-emoji").textContent = opt.emoji;
+    const labelEl = wrapper.querySelector(".diary-icon-select-label");
+    labelEl.textContent = opt.label;
+    labelEl.style.color = "#ffffff";
+    wrapper.querySelector("input[type=hidden]") && (wrapper.querySelector("input[type=hidden]").value = opt.label);
+}
+
+function setIconSelectDisabled(wrapperId, disabled) {
+    const wrapper = document.getElementById(wrapperId);
+    if (!wrapper) return;
+    wrapper.querySelector(".diary-icon-select-trigger").disabled = disabled;
+    wrapper.classList.toggle("is-disabled", disabled);
+}
+
 function initIconSelects() {
     initIconSelect("emotion-icon-select", EMOTION_OPTIONS, "diary-emotion");
     initIconSelect("weather-icon-select", WEATHER_OPTIONS, "diary-weather");
@@ -330,8 +349,8 @@ function setDiaryReadOnly(fields, isReadOnly) {
 
 async function initDiaryReadPage() {
     const dateEl = document.getElementById("diary-read-date");
-    const emotionEl = document.getElementById("diary-read-emotion");
-    const weatherEl = document.getElementById("diary-read-weather");
+    const emotionInput = document.getElementById("diary-read-emotion");
+    const weatherInput = document.getElementById("diary-read-weather");
     const titleEl = document.getElementById("diary-read-title");
     const contentEl = document.getElementById("diary-read-content");
     const editButton = document.getElementById("diary-edit-button");
@@ -339,13 +358,16 @@ async function initDiaryReadPage() {
     const personaSelect = document.getElementById("diary-read-persona-select");
     const rerollSummaryButton = document.getElementById("ai-reroll-summary-button");
 
-    if (!dateEl || !emotionEl || !weatherEl || !titleEl || !contentEl) {
+    if (!dateEl || !emotionInput || !weatherInput || !titleEl || !contentEl) {
         return;
     }
 
     if (typeof initCustomSelect === "function") initCustomSelect(personaSelect);
 
-    const fields = [dateEl, emotionEl, weatherEl, titleEl, contentEl];
+    initIconSelect("emotion-read-icon-select", EMOTION_OPTIONS, "diary-read-emotion");
+    initIconSelect("weather-read-icon-select", WEATHER_OPTIONS, "diary-read-weather");
+
+    const fields = [dateEl, titleEl, contentEl];
     const params = new URLSearchParams(window.location.search);
     const diaryId = params.get("id");
     let isEditing = false;
@@ -358,10 +380,12 @@ async function initDiaryReadPage() {
     try {
         const diary = await fetchDiary(diaryId);
         dateEl.value = diary.diary_date || "";
-        const emotionOpt = EMOTION_OPTIONS.find(o => o.label === diary.emotion);
-        emotionEl.value = emotionOpt ? `${emotionOpt.emoji} ${emotionOpt.label}` : (diary.emotion || "");
-        const weatherOpt = WEATHER_OPTIONS.find(o => o.label === diary.weather);
-        weatherEl.value = weatherOpt ? `${weatherOpt.emoji} ${weatherOpt.label}` : (diary.weather || "");
+        emotionInput.value = diary.emotion || "";
+        weatherInput.value = diary.weather || "";
+        setIconSelectValue("emotion-read-icon-select", EMOTION_OPTIONS, diary.emotion);
+        setIconSelectValue("weather-read-icon-select", WEATHER_OPTIONS, diary.weather);
+        setIconSelectDisabled("emotion-read-icon-select", true);
+        setIconSelectDisabled("weather-read-icon-select", true);
         titleEl.value = diary.title || "";
         contentEl.value = diary.content || "";
         await populatePersonaSelect(personaSelect, diary.persona_id || "");
@@ -454,6 +478,8 @@ async function initDiaryReadPage() {
                 if (!isEditing) {
                     isEditing = true;
                     setDiaryReadOnly(fields, false);
+                    setIconSelectDisabled("emotion-read-icon-select", false);
+                    setIconSelectDisabled("weather-read-icon-select", false);
                     if (personaSelect) {
                         personaSelect.disabled = false;
                     }
@@ -473,22 +499,26 @@ async function initDiaryReadPage() {
                 try {
                     const updatedDiary = await updateDiary(diaryId, {
                         title: titleEl.value.trim() || null,
-                        emotion: emotionEl.value.trim() || null,
-                        weather: weatherEl.value.trim() || null,
+                        emotion: emotionInput.value.trim() || null,
+                        weather: weatherInput.value.trim() || null,
                         content: contentEl.value.trim(),
                         diary_date: dateEl.value.trim(),
                         persona_id: personaSelect?.value || null,
                     });
 
                     dateEl.value = updatedDiary.diary_date || "";
-                    emotionEl.value = updatedDiary.emotion || "";
-                    weatherEl.value = updatedDiary.weather || "";
+                    emotionInput.value = updatedDiary.emotion || "";
+                    weatherInput.value = updatedDiary.weather || "";
+                    setIconSelectValue("emotion-read-icon-select", EMOTION_OPTIONS, updatedDiary.emotion);
+                    setIconSelectValue("weather-read-icon-select", WEATHER_OPTIONS, updatedDiary.weather);
                     titleEl.value = updatedDiary.title || "";
                     contentEl.value = updatedDiary.content || "";
                     await populatePersonaSelect(personaSelect, updatedDiary.persona_id || "");
 
                     isEditing = false;
                     setDiaryReadOnly(fields, true);
+                    setIconSelectDisabled("emotion-read-icon-select", true);
+                    setIconSelectDisabled("weather-read-icon-select", true);
                     const voiceBtnWrapper = document.getElementById("voice-btn-wrapper");
                     if (voiceBtnWrapper) voiceBtnWrapper.classList.add("hidden");
                     if (personaSelect) {
