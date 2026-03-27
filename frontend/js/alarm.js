@@ -219,17 +219,116 @@ async function alarmApiRequest(path, options = {}, fallbackMessage = "알람 요
 }
 
 const shownAlarmMap = new Map();
+let alarmServiceWorkerRegistration = null;
+let alarmPushSubscribed = false;
 
 async function requestAlarmNotificationPermission() {
   if (!("Notification" in window)) return;
 
   if (Notification.permission === "default") {
     try {
-      await Notification.requestPermission();
+      return await Notification.requestPermission();
     } catch (error) {
       console.error("알림 권한 요청 실패:", error);
     }
   }
+
+  return Notification.permission;
+}
+
+function setAlarmConsentValue(elementId, text, tone) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+
+  el.textContent = text;
+  el.classList.remove("is-success", "is-warning", "is-error");
+
+  if (tone) {
+    el.classList.add(tone);
+  }
+}
+
+function setAlarmConsentMessage(message) {
+  const el = document.getElementById("alarm-consent-message");
+  if (!el) return;
+  el.textContent = message;
+}
+
+function updateAlarmConsentButtons(permissionGranted, pushSubscribed) {
+  const permissionBtn = document.getElementById("alarm-enable-notification-btn");
+  const pushBtn = document.getElementById("alarm-enable-push-btn");
+
+  if (permissionBtn) {
+    permissionBtn.disabled = permissionGranted;
+    permissionBtn.textContent = permissionGranted ? "알림 권한 완료" : "알림 권한 동의";
+  }
+
+  if (pushBtn) {
+    pushBtn.disabled = !permissionGranted || pushSubscribed;
+    pushBtn.textContent = pushSubscribed ? "푸시 구독 완료" : "푸시 구독 동의";
+  }
+}
+
+async function syncAlarmConsentStatus(registration = alarmServiceWorkerRegistration) {
+  if (!window.isSecureContext) {
+    setAlarmConsentValue("alarm-permission-status", "보안 연결 필요", "is-error");
+    setAlarmConsentValue("alarm-push-status", "구독 불가", "is-error");
+    setAlarmConsentMessage("현재 주소는 HTTPS가 아니어서 브라우저 푸시 알림을 사용할 수 없습니다.");
+    updateAlarmConsentButtons(false, false);
+    alarmPushSubscribed = false;
+    return false;
+  }
+
+  if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) {
+    setAlarmConsentValue("alarm-permission-status", "지원 안 함", "is-error");
+    setAlarmConsentValue("alarm-push-status", "지원 안 함", "is-error");
+    setAlarmConsentMessage("이 브라우저에서는 알림 또는 푸시 기능을 지원하지 않습니다.");
+    updateAlarmConsentButtons(false, false);
+    alarmPushSubscribed = false;
+    return false;
+  }
+
+  const permissionGranted = Notification.permission === "granted";
+  setAlarmConsentValue(
+    "alarm-permission-status",
+    permissionGranted ? "허용됨" : Notification.permission === "denied" ? "차단됨" : "미동의",
+    permissionGranted ? "is-success" : Notification.permission === "denied" ? "is-error" : "is-warning"
+  );
+
+  let subscription = null;
+  if (registration) {
+    try {
+      subscription = await registration.pushManager.getSubscription();
+    } catch (error) {
+      console.error("푸시 구독 상태 확인 실패:", error);
+    }
+  }
+
+  alarmPushSubscribed = Boolean(subscription);
+  setAlarmConsentValue(
+    "alarm-push-status",
+    alarmPushSubscribed ? "완료됨" : "미동의",
+    alarmPushSubscribed ? "is-success" : "is-warning"
+  );
+
+  if (permissionGranted && alarmPushSubscribed) {
+    setAlarmConsentMessage("알람 권한과 푸시 구독이 완료되었습니다. 이제 저장한 알람을 받을 수 있습니다.");
+  } else if (!permissionGranted) {
+    setAlarmConsentMessage("먼저 브라우저 알림 권한에 동의해주세요.");
+  } else {
+    setAlarmConsentMessage("알림 권한은 허용되었지만 푸시 구독이 아직 완료되지 않았습니다.");
+  }
+
+  updateAlarmConsentButtons(permissionGranted, alarmPushSubscribed);
+  return permissionGranted && alarmPushSubscribed;
+}
+
+async function ensureAlarmConsentReady() {
+  const ready = await syncAlarmConsentStatus();
+  if (!ready) {
+    showAlarmToast("알람을 받으려면 먼저 알림 권한과 푸시 구독 동의를 완료해주세요.", "info", "알람 동의 필요");
+  }
+  return ready;
 }
 
 function getSelectedRepeatDays() {
@@ -466,6 +565,10 @@ async function saveAlarm() {
     return;
   }
 
+  if (!(await ensureAlarmConsentReady())) {
+    return;
+  }
+
   const alarmTime = getAlarmTimeValue();
   if (!alarmTime) {
     showAlarmToast("알람 시간을 선택해주세요.", "info", "입력 확인");
@@ -536,6 +639,7 @@ async function registerServiceWorker() {
   try {
     const registration = await navigator.serviceWorker.register("/sw.js");
     console.log("Service Worker 등록 성공:", registration.scope);
+    alarmServiceWorkerRegistration = registration;
     return registration;
   } catch (error) {
     console.error("Service Worker 등록 실패:", error);
@@ -546,7 +650,7 @@ async function registerServiceWorker() {
 async function subscribePush(registration) {
   try {
     const token = getAccessToken();
-    if (!token) return;
+    if (!token) return false;
 
     const keyData = await alarmApiRequest(
       "/alarms/push/public-key",
@@ -557,7 +661,8 @@ async function subscribePush(registration) {
     const publicKey = keyData?.publicKey;
     if (!publicKey) {
       console.warn("VAPID 공개키가 없어 푸시 구독을 건너뜁니다.");
-      return;
+      await syncAlarmConsentStatus(registration);
+      return false;
     }
 
     const existing = await registration.pushManager.getSubscription();
@@ -578,8 +683,12 @@ async function subscribePush(registration) {
       },
       "푸시 구독 저장에 실패했습니다."
     );
+    await syncAlarmConsentStatus(registration);
+    return true;
   } catch (error) {
     console.error("Push 구독 실패:", error);
+    await syncAlarmConsentStatus(registration);
+    throw error;
   }
 }
 
@@ -601,21 +710,68 @@ async function checkDueAlarmsForNotification() {
   }
 }
 
+async function handleAlarmPermissionConsent() {
+  if (!window.isSecureContext) {
+    await syncAlarmConsentStatus();
+    showAlarmToast("HTTP 환경에서는 브라우저 알림 동의를 받을 수 없습니다. HTTPS 또는 localhost에서 시도해주세요.", "error", "보안 연결 필요");
+    return;
+  }
+
+  const permission = await requestAlarmNotificationPermission();
+  await syncAlarmConsentStatus();
+
+  if (permission === "granted") {
+    showAlarmToast("브라우저 알림 권한이 허용되었습니다.", "success", "권한 완료");
+  } else if (permission === "denied") {
+    showAlarmToast("브라우저 설정에서 알림 권한이 차단되어 있습니다.", "error", "권한 차단");
+  } else {
+    showAlarmToast("알림 권한 동의가 아직 완료되지 않았습니다.", "info", "권한 확인");
+  }
+}
+
+async function handleAlarmPushConsent() {
+  if (!window.isSecureContext) {
+    await syncAlarmConsentStatus();
+    showAlarmToast("HTTP 환경에서는 푸시 구독을 사용할 수 없습니다. HTTPS 또는 localhost에서 시도해주세요.", "error", "보안 연결 필요");
+    return;
+  }
+
+  if (Notification.permission !== "granted") {
+    showAlarmToast("먼저 알림 권한 동의를 완료해주세요.", "info", "권한 필요");
+    return;
+  }
+
+  if (!alarmServiceWorkerRegistration) {
+    alarmServiceWorkerRegistration = await registerServiceWorker();
+  }
+
+  if (!alarmServiceWorkerRegistration) {
+    await syncAlarmConsentStatus();
+    showAlarmToast("서비스 워커 등록에 실패해 푸시 구독을 진행할 수 없습니다.", "error", "구독 실패");
+    return;
+  }
+
+  try {
+    await subscribePush(alarmServiceWorkerRegistration);
+    showAlarmToast("푸시 구독 동의가 완료되었습니다.", "success", "구독 완료");
+  } catch (error) {
+    showAlarmToast(getFriendlyAlarmError(error, "푸시 구독에 실패했습니다."), "error", "구독 실패");
+  }
+}
+
 window.addEventListener("DOMContentLoaded", async () => {
   populateAlarmTimeSelects();
   setupDayAllToggle();
 
-  const registration = await registerServiceWorker();
-  await requestAlarmNotificationPermission();
-
-  if (registration) {
-    await subscribePush(registration);
-  }
+  alarmServiceWorkerRegistration = await registerServiceWorker();
+  await syncAlarmConsentStatus(alarmServiceWorkerRegistration);
 
   document.getElementById("save-alarm-btn")?.addEventListener("click", saveAlarm);
   document.getElementById("add-alarm-btn")?.addEventListener("click", () => showAlarmFormView("create"));
   document.getElementById("back-to-list-btn")?.addEventListener("click", showAlarmListView);
   document.getElementById("cancel-alarm-btn")?.addEventListener("click", showAlarmListView);
+  document.getElementById("alarm-enable-notification-btn")?.addEventListener("click", handleAlarmPermissionConsent);
+  document.getElementById("alarm-enable-push-btn")?.addEventListener("click", handleAlarmPushConsent);
 
   await loadAlarms();
   // await checkDueAlarmsForNotification();
