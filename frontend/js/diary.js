@@ -65,13 +65,19 @@ async function fetchDiaryHashtags(diaryId) {
     return apiRequest(`/diaries/${encodeURIComponent(diaryId)}/hashtags`, { method: "GET" });
 }
 
-function renderHashtags(hashtags) {
+function renderHashtags(hashtags, showEmpty = false) {
     const wrapper = document.getElementById("diary-hashtag-wrapper");
     if (!wrapper) return;
-
     wrapper.innerHTML = "";
-    if (!hashtags || !hashtags.length) return;
-
+    if (!hashtags || !hashtags.length) {
+        if (showEmpty) {
+            const msg = document.createElement("span");
+            msg.className = "text-sm text-white/40";
+            msg.textContent = "해시태그를 생성할 수 없었어요.";
+            wrapper.appendChild(msg);
+        }
+        return;
+    }
     hashtags.forEach((tag) => {
         const span = document.createElement("span");
         span.className = "px-3 py-1 rounded-full text-sm text-white/80 border border-white/20 bg-white/10";
@@ -298,9 +304,9 @@ async function initDiaryReadPage() {
         // 해시태그 로드
         try {
             const hashtagData = await fetchDiaryHashtags(diaryId);
-            renderHashtags(hashtagData.hashtags || []);
+            renderHashtags(hashtagData.hashtags || [], true);
         } catch (_) {
-            // 해시태그 없어도 페이지 정상 표시
+            renderHashtags([], true);
         }
         
         await populatePersonaSelect(personaSelect, diary.persona_id || "");
