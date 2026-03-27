@@ -3,64 +3,556 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>알람 설정</title>
-  <link rel="stylesheet" href="/css/style.css" />
+  <title>알람 관리</title>
   <style>
-    body { background-color: #f5f5f5 !important; color: #222 !important; }
-    .card { background-color: #fff !important; color: #222 !important; }
-    label, h1, h2, p { color: #222 !important; }
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #f5f7fb;
+      color: #222;
+    }
+
+    .page {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: 30px;
+    }
+
+    .subtext {
+      margin: 0;
+      color: #666;
+      font-size: 14px;
+    }
+
+    .section-title {
+      margin-top: 0;
+      margin-bottom: 18px;
+      font-size: 22px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-group.full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    input,
+    textarea,
+    button {
+      font: inherit;
+    }
+
+    input,
+    textarea {
+      border: 1px solid #d9dce3;
+      border-radius: 12px;
+      padding: 12px 14px;
+      outline: none;
+      background: #fff;
+    }
+
+    input:focus,
+    textarea:focus {
+      border-color: #4f7cff;
+      box-shadow: 0 0 0 4px rgba(79, 124, 255, 0.12);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 90px;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 18px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: transform 0.12s ease, opacity 0.12s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      opacity: 0.95;
+    }
+
+    .btn-primary {
+      background: #4f7cff;
+      color: white;
+    }
+
+    .btn-secondary {
+      background: #edf2ff;
+      color: #2443a8;
+    }
+
+    .btn-danger {
+      background: #ffebee;
+      color: #c62828;
+    }
+
+    .alarm-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .alarm-item {
+      border: 1px solid #e4e8f0;
+      border-radius: 16px;
+      padding: 16px;
+      background: #fcfdff;
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    .alarm-left {
+      flex: 1;
+    }
+
+    .alarm-message {
+      margin: 0 0 10px;
+      font-size: 17px;
+      font-weight: 700;
+      color: #1f2937;
+    }
+
+    .alarm-meta {
+      margin: 4px 0;
+      color: #667085;
+      font-size: 14px;
+    }
+
+    .empty-box {
+      text-align: center;
+      padding: 36px 16px;
+      border: 1px dashed #d8deea;
+      border-radius: 16px;
+      color: #6b7280;
+      background: #fafbff;
+    }
+
+    .loading {
+      color: #4b5563;
+      font-size: 14px;
+    }
+
+    /* Toast */
+    #toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .custom-toast {
+      min-width: 280px;
+      max-width: 360px;
+      background: #ffffff;
+      color: #222;
+      border-radius: 14px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
+      padding: 14px 16px;
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: all 0.25s ease;
+      border-left: 6px solid #3b82f6;
+    }
+
+    .custom-toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .custom-toast.success {
+      border-left-color: #22c55e;
+    }
+
+    .custom-toast.error {
+      border-left-color: #ef4444;
+    }
+
+    .custom-toast.info {
+      border-left-color: #3b82f6;
+    }
+
+    .toast-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .toast-content {
+      flex: 1;
+    }
+
+    .toast-title {
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .toast-close {
+      background: transparent;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      color: #666;
+      padding: 0;
+      line-height: 1;
+    }
+
+    .toast-close:hover {
+      color: #111;
+    }
+
+    @media (max-width: 700px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .alarm-item {
+        flex-direction: column;
+      }
+
+      .page {
+        margin: 20px auto;
+        padding: 14px;
+      }
+    }
   </style>
 </head>
 <body>
-  <main class="page-container">
-    <section class="card">
-      <h1>알람 설정</h1>
-      <p>시간과 요일을 선택해 알람을 등록하세요.</p>
+  <div id="toast-container"></div>
 
-      <div class="form-group">
-        <label for="token-input">Bearer 토큰 (docs에서 복사)</label>
-        <input type="text" id="token-input" placeholder="eyJ..." style="width:100%" />
-      </div>
+  <div class="page">
+    <div class="card">
+      <h1>알람 관리</h1>
+      <p class="subtext">알람 등록, 조회, 삭제를 한 페이지에서 할 수 있어요.</p>
+    </div>
 
-      <div class="form-group">
-        <label for="alarm-time">알람 시간</label>
-        <input type="time" id="alarm-time" />
-      </div>
+    <div class="card">
+      <h2 class="section-title">알람 등록</h2>
 
-      <div class="form-group">
-        <label>반복 요일</label>
-        <div class="weekday-group">
-          <label><input type="checkbox" id="day-mon" /> 월</label>
-          <label><input type="checkbox" id="day-tue" /> 화</label>
-          <label><input type="checkbox" id="day-wed" /> 수</label>
-          <label><input type="checkbox" id="day-thu" /> 목</label>
-          <label><input type="checkbox" id="day-fri" /> 금</label>
-          <label><input type="checkbox" id="day-sat" /> 토</label>
-          <label><input type="checkbox" id="day-sun" /> 일</label>
+      <form id="alarmForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="alarmDate">날짜</label>
+            <input type="date" id="alarmDate" required />
+          </div>
+
+          <div class="form-group">
+            <label for="alarmTime">시간</label>
+            <input type="time" id="alarmTime" required />
+          </div>
+
+          <div class="form-group full">
+            <label for="alarmMessage">메시지</label>
+            <textarea id="alarmMessage" placeholder="알람 메시지를 입력하세요" required></textarea>
+          </div>
         </div>
+
+        <div class="button-row">
+          <button type="submit" class="btn btn-primary">알람 저장</button>
+          <button type="button" class="btn btn-secondary" id="reloadBtn">목록 새로고침</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2 class="section-title">알람 목록</h2>
+      <div id="alarmList" class="alarm-list">
+        <p class="loading">불러오는 중...</p>
       </div>
+    </div>
+  </div>
 
-      <div class="form-group">
-        <label>
-          <input type="checkbox" id="alarm-enabled" checked />
-          알람 활성화
-        </label>
-      </div>
+  <script>
+    const API_BASE = "/api/v1/alarms";
 
-      <div class="button-group">
-        <button type="button" id="save-alarm-btn">알람 저장</button>
-        <button type="button" id="load-alarms-btn">알람 불러오기</button>
-      </div>
+    function showToast(message, type = "info", title = "알림") {
+      let container = document.getElementById("toast-container");
 
-      <hr />
+      if (!container) {
+        container = document.createElement("div");
+        container.id = "toast-container";
+        document.body.appendChild(container);
+      }
 
-      <section>
-        <h2>등록된 알람</h2>
-        <div id="alarm-list"></div>
-      </section>
-    </section>
-  </main>
+      const toast = document.createElement("div");
+      toast.className = `custom-toast ${type}`;
 
-  <script src="/js/alarm.js"></script>
+      toast.innerHTML = `
+        <div class="toast-row">
+          <div class="toast-content">
+            <div class="toast-title">${title}</div>
+            <div>${message}</div>
+          </div>
+          <button class="toast-close" type="button">&times;</button>
+        </div>
+      `;
+
+      container.appendChild(toast);
+
+      requestAnimationFrame(() => {
+        toast.classList.add("show");
+      });
+
+      let removed = false;
+
+      const removeToast = () => {
+        if (removed) return;
+        removed = true;
+        toast.classList.remove("show");
+        setTimeout(() => {
+          toast.remove();
+        }, 250);
+      };
+
+      const closeBtn = toast.querySelector(".toast-close");
+      closeBtn.addEventListener("click", removeToast);
+
+      setTimeout(removeToast, 3000);
+    }
+
+    function getToken() {
+      return (
+        localStorage.getItem("access_token") ||
+        localStorage.getItem("token") ||
+        sessionStorage.getItem("access_token") ||
+        ""
+      );
+    }
+
+    function getHeaders() {
+      const token = getToken();
+      const headers = {
+        "Content-Type": "application/json"
+      };
+
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      return headers;
+    }
+
+    function formatDateTime(value) {
+      if (!value) return "-";
+      const date = new Date(value);
+      if (isNaN(date.getTime())) return value;
+      return date.toLocaleString("ko-KR");
+    }
+
+    function renderAlarmList(alarms) {
+      const alarmList = document.getElementById("alarmList");
+
+      if (!Array.isArray(alarms) || alarms.length === 0) {
+        alarmList.innerHTML = `
+          <div class="empty-box">
+            등록된 알람이 아직 없어요.
+          </div>
+        `;
+        return;
+      }
+
+      alarmList.innerHTML = alarms.map((alarm) => {
+        const id = alarm.id ?? alarm.alarm_id ?? "";
+        const message = alarm.message ?? alarm.title ?? "알람 메시지 없음";
+        const scheduledAt =
+          alarm.scheduled_at ??
+          alarm.alarm_time ??
+          alarm.time ??
+          alarm.datetime ??
+          "";
+        const isActive =
+          alarm.is_active ?? alarm.active ?? alarm.enabled ?? true;
+
+        return `
+          <div class="alarm-item">
+            <div class="alarm-left">
+              <p class="alarm-message">${escapeHtml(message)}</p>
+              <p class="alarm-meta"><strong>시간:</strong> ${escapeHtml(formatDateTime(scheduledAt))}</p>
+              <p class="alarm-meta"><strong>상태:</strong> ${isActive ? "활성" : "비활성"}</p>
+              ${id ? `<p class="alarm-meta"><strong>ID:</strong> ${escapeHtml(String(id))}</p>` : ""}
+            </div>
+            <div class="button-row">
+              <button class="btn btn-danger" onclick="deleteAlarm('${String(id)}')">삭제</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    async function loadAlarms() {
+      const alarmList = document.getElementById("alarmList");
+      alarmList.innerHTML = `<p class="loading">불러오는 중...</p>`;
+
+      try {
+        const response = await fetch(API_BASE, {
+          method: "GET",
+          headers: getHeaders()
+        });
+
+        if (!response.ok) {
+          throw new Error(`목록 조회 실패: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (Array.isArray(data)) {
+          renderAlarmList(data);
+        } else if (Array.isArray(data.items)) {
+          renderAlarmList(data.items);
+        } else if (Array.isArray(data.alarms)) {
+          renderAlarmList(data.alarms);
+        } else {
+          renderAlarmList([]);
+        }
+      } catch (error) {
+        console.error(error);
+        alarmList.innerHTML = `
+          <div class="empty-box">
+            알람 목록을 불러오지 못했습니다.
+          </div>
+        `;
+        showToast("알람 목록을 불러오지 못했습니다.", "error", "정원님");
+      }
+    }
+
+    async function createAlarm(event) {
+      event.preventDefault();
+
+      const date = document.getElementById("alarmDate").value;
+      const time = document.getElementById("alarmTime").value;
+      const message = document.getElementById("alarmMessage").value.trim();
+
+      if (!date || !time || !message) {
+        showToast("날짜, 시간, 메시지를 모두 입력해주세요.", "info", "입력 확인");
+        return;
+      }
+
+      const scheduledAt = `${date}T${time}:00`;
+
+      const payloadCandidates = [
+        { message, scheduled_at: scheduledAt },
+        { title: message, scheduled_at: scheduledAt },
+        { message, alarm_time: scheduledAt },
+        { title: message, alarm_time: scheduledAt }
+      ];
+
+      let lastError = null;
+      let success = false;
+
+      for (const payload of payloadCandidates) {
+        try {
+          const response = await fetch(API_BASE, {
+            method: "POST",
+            headers: getHeaders(),
+            body: JSON.stringify(payload)
+          });
+
+          if (response.ok) {
+            success = true;
+            break;
+          } else {
+            lastError = new Error(`등록 실패: ${response.status}`);
+          }
+        } catch (error) {
+          lastError = error;
+        }
+      }
+
+      if (!success) {
+        console.error(lastError);
+        showToast("알람 저장에 실패했습니다. API 필드명을 확인해주세요.", "error", "저장 실패");
+        return;
+      }
+
+      showToast("알람이 저장되었습니다.", "success", "완료");
+      document.getElementById("alarmForm").reset();
+      await loadAlarms();
+    }
+
+    async function deleteAlarm(id) {
+      if (!id) {
+        showToast("삭제할 알람 ID를 찾지 못했습니다.", "error", "삭제 실패");
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/${id}`, {
+          method: "DELETE",
+          headers: getHeaders()
+        });
+
+        if (!response.ok) {
+          throw new Error(`삭제 실패: ${response.status}`);
+        }
+
+        showToast("알람이 삭제되었습니다.", "success", "완료");
+        await loadAlarms();
+      } catch (error) {
+        console.error(error);
+        showToast("알람 삭제에 실패했습니다.", "error", "삭제 실패");
+      }
+    }
+
+    document.getElementById("alarmForm").addEventListener("submit", createAlarm);
+    document.getElementById("reloadBtn").addEventListener("click", loadAlarms);
+
+    window.addEventListener("DOMContentLoaded", loadAlarms);
+  </script>
 </body>
 </html>

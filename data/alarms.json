@@ -1,0 +1,11 @@
+[
+  {
+    "id": "1",
+    "alarm_time": "14:50:00",
+    "days": [
+      "FRI"
+    ],
+    "is_active": true,
+    "last_triggered_key": "2026-03-27 14:50"
+  }
+]
