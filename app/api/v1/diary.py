@@ -153,6 +153,7 @@ async def update_diary(
                 await db.delete(existing)
                 await db.commit()
         else:
+
 #            logger.info(f"피드백 재생성 시도안함")
             return updated_diary  # 변경 없으면 피드백 재생성 안 함
 
@@ -169,6 +170,27 @@ async def update_diary(
         )
     except Exception:
         pass  # 피드백 갱신 실패해도 일기 수정은 성공으로 처리
+
+      # 내용 변경 시 해시태그 재생성
+    try:
+        if body.content is not None and body.content != original_content:
+            from app.services.gpt_service import gpt_service
+            from app.models.hashtag import DiaryHashtag
+            from sqlalchemy import select as sa_select2
+
+            # 기존 해시태그 연결 삭제
+            stmt_del = sa_select2(DiaryHashtag).where(DiaryHashtag.diary_id == diary_id)
+            result_del = await db.execute(stmt_del)
+            for dh in result_del.scalars().all():
+                await db.delete(dh)
+            await db.commit()
+
+            # 새 해시태그 생성
+            hashtags = await gpt_service.generate_hashtags(updated_diary.content)
+            if hashtags:
+                await diary_svc.add_hashtags(db, diary_id, current_user.id, hashtags)
+    except Exception:
+        pass  # 해시태그 재생성 실패해도 수정은 성공으로 처리
 
     return updated_diary
 
