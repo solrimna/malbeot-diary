@@ -480,6 +480,16 @@ async function initDiaryReadPage() {
                     } catch (_) {
                         // 피드백 갱신 실패해도 수정은 성공으로 처리
                     }
+
+                      // 해시태그 재생성 후 다시 불러오기
+                    try {
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                        const hashtagData = await fetchDiaryHashtags(diaryId);
+                        renderHashtags(hashtagData.hashtags || [], true);
+                    } catch (_) {
+                        // 해시태그 갱신 실패해도 수정은 성공으로 처리
+                    }
+
                 } catch (error) {
                     window.alert(error.message || "일기 수정에 실패했어요.");
                     editButton.textContent = "저장";
