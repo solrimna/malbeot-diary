@@ -1,4 +1,36 @@
 /* =========================
+   App Logo Badge (워터마크 커버)
+========================= */
+#app-logo-badge {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1;
+    background: #222b52;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 8px;
+    padding: 6px 35px;
+    pointer-events: none;
+    white-space: nowrap;
+    font-family: "Malgun Gothic", "맑은 고딕", "Apple SD Gothic Neo", sans-serif;
+    box-shadow: 0 0 22px rgba(255, 255, 255, 0.18);
+}
+
+.app-logo-badge-text {
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.9);
+    letter-spacing: 0.08em;
+    text-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+}
+
+.app-logo-badge-code {
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+    font-family: 'Petit Formal Script', cursive;
+}
+
+/* =========================
    Common
 ========================= */
 :root {
