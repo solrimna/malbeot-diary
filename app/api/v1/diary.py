@@ -1,6 +1,7 @@
 # 담당 : A팀원 유가영
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import date
 import uuid
 
 from app.database import get_db
@@ -19,13 +20,21 @@ feedback_svc = FeedbackService()
 
 
 # ── GET /diaries ─ 목록 조회 ────────────────────
+# - date:   특정 날짜 일기만 조회 (지정 시 after/before/limit 무시)
+# - after:  이 날짜 이후 일기만 조회 (캘린더 월별 조회 시 월 시작일)
+# - before: 이 날짜 이전 일기만 조회 (커서 or 캘린더 월별 조회 시 다음달 1일)
+# - limit:  한 번에 반환할 개수 (기본 20, 월별 조회 시 최대 31)
 @router.get("/", response_model=list[DiaryResponse])
 async def list_diaries(
     tag: str | None = Query(None, description="해시태그 필터"),
+    date: date | None = Query(None, description="특정 날짜 조회 (YYYY-MM-DD)"),
+    after: date | None = Query(None, description="이 날짜 이후 일기만 조회 (YYYY-MM-DD)"),
+    before: date | None = Query(None, description="이 날짜 이전 일기만 조회 (YYYY-MM-DD)"),
+    limit: int = Query(20, ge=1, le=31, description="한 번에 반환할 최대 개수"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return await diary_svc.get_diaries(db, current_user.id, tag)
+    return await diary_svc.get_diaries(db, current_user.id, tag, date, after, before, limit)
 
 
 # ── POST /diaries ─ 일기 생성 ───────────────────
