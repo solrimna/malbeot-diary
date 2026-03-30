@@ -49,9 +49,10 @@ function createDiaryCard(diary) {
     return book;
 }
 
-// before: 커서 날짜 (이 날짜보다 오래된 일기 요청), limit: 한 번에 받을 개수
-async function fetchDiaries({ before = null, limit = 20 } = {}) {
+// tag=해시 태그, before: 커서 날짜 (이 날짜보다 오래된 일기 요청), limit: 한 번에 받을 개수
+async function fetchDiaries({ tag = null, before = null, limit = 20 } = {}) {
     const params = new URLSearchParams({ limit });
+    if (tag) params.append("tag", tag); // URLSearchParams 가 자동인코딩해주므로, encodeURIComponent 생략 
     if (before) params.append("before", before);
     return apiRequest(`/diaries/?${params.toString()}`, { method: "GET" });
 }
@@ -91,21 +92,28 @@ function renderHashtags(hashtags, showEmpty = false) {
         wrapper.appendChild(msg);
         return;
     }
-
     hashtags.forEach((tag) => {
         const span = document.createElement("span");
         span.className = "group relative px-3 py-1 rounded-full text-sm text-white/80 border border-white/20 bg-white/10 cursor-pointer hover:border-white/50 transition-all";
-        span.innerHTML = `
-            <span class="tag-text">#${escapeHtml(tag)}</span>
-            <button type="button"
-                class="tag-delete hidden group-hover:inline-block ml-1 text-white/50 hover:text-white text-xs font-bold"
-                onclick="removeHashtag(this, '${escapeHtml(tag)}')">✕</button>
-        `;
-        
+
+        const tagSpan = document.createElement("span");
+        tagSpan.className = "tag-text cursor-pointer hover:text-white";
+        tagSpan.textContent = `#${tag}`;
+        tagSpan.addEventListener("click", () => {
+            window.location.href = "my-diary.html?tag=" + encodeURIComponent(tag);
+        });
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.type = "button";
+        deleteBtn.className = "tag-delete hidden group-hover:inline-block ml-1 text-white/50 hover:text-white text-xs font-bold";
+        deleteBtn.textContent = "✕";
+        deleteBtn.addEventListener("click", () => removeHashtag(deleteBtn, tag));
+
+        span.appendChild(tagSpan);
+        span.appendChild(deleteBtn);
         wrapper.appendChild(span);
     });
-}
-
+}    
 async function removeHashtag(button, tagName) {
     const span = button.closest("span");
     if (!span) return;
@@ -176,21 +184,36 @@ async function populatePersonaSelect(selectElement, selectedPersonaId = "", useA
 // - diaryShelfCursor: 마지막으로 받은 일기의 diary_date (다음 요청의 before 값)
 // - diaryShelfHasMore: 추가로 불러올 일기가 있는지 여부
 // - diaryShelfLoading: 중복 요청 방지 플래그
+// - diaryShelfCurrentTag: 현재 태그 필터 (moveDiaryShelf에서도 접근)
 let diaryShelfCursor = null;
 let diaryShelfHasMore = true;
 let diaryShelfLoading = false;
+let diaryShelfCurrentTag = null;
 
 const DIARY_SHELF_LIMIT = 20; // 한 번에 불러올 개수 (데스크탑 기준 약 15권 표시)
 
 // 초기 로드: 책장을 비우고 최신 일기부터 첫 배치를 불러옴
-async function renderDiaryShelfFromApi() {
+async function renderDiaryShelfFromApi(tag = null) {
     const shelf = document.getElementById("diary-shelf");
     if (!shelf) return;
 
     // 상태 초기화
+    diaryShelfCurrentTag = tag;
     diaryShelfCursor = null;
     diaryShelfHasMore = true;
     shelf.innerHTML = "";
+
+    // 태그 필터 배너 표시
+    const banner = document.getElementById("tag-filter-banner");
+    const label = document.getElementById("tag-filter-label");
+    if (banner && label) {
+        if (tag) {
+            label.textContent = `#${tag}`;
+            banner.classList.remove("hidden");
+        } else {
+            banner.classList.add("hidden");
+        }
+    }
 
     await loadMoreDiaries();
 
@@ -201,17 +224,22 @@ async function renderDiaryShelfFromApi() {
 
 // 추가 로드: 커서 기준으로 다음 배치를 책장 끝에 이어 붙임
 async function loadMoreDiaries() {
+    const tag = diaryShelfCurrentTag;
     const shelf = document.getElementById("diary-shelf");
     if (!shelf || !diaryShelfHasMore || diaryShelfLoading) return;
 
     diaryShelfLoading = true;
     try {
-        const diaries = await fetchDiaries({ before: diaryShelfCursor, limit: DIARY_SHELF_LIMIT });
+        const diaries = await fetchDiaries({ tag, before: diaryShelfCursor, limit: DIARY_SHELF_LIMIT });
 
         if (!diaries.length) {
             // 첫 로드인데 결과가 없으면 빈 상태 표시
             if (!diaryShelfCursor) {
-                shelf.innerHTML = `
+                shelf.innerHTML =  tag ? `
+                    <div class="diary-empty-book" id="diary-empty-state">
+                        #${escapeHtml(tag)} 태그의 일기가 없어요.
+                    </div>
+                ` : `
                     <div class="diary-empty-book" id="diary-empty-state">
                         아직 저장된 일기가 없어요.<br>
                         첫 번째 일기를 작성해보세요.
@@ -302,8 +330,14 @@ function initDiaryListPage() {
     if (!shelf) {
         return;
     }
+    // URL에서 태그 파라미터 읽기
+    const params = new URLSearchParams(window.location.search);
+    const tag = params.get("tag");
+    renderDiaryShelfFromApi(tag);
+}
 
-    renderDiaryShelfFromApi();
+function clearTagFilter() {
+    window.location.href = "my-diary.html";
 }
 
 const EMOTION_OPTIONS = [
