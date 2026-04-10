@@ -68,6 +68,10 @@ known-first-party = ["app"]
 quote-style = "double"
 indent-style = "space"
 
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
