@@ -1,21 +1,15 @@
 # 담당 : A팀원 유가영
 # 교수님 피드백 반영: 공감형/조언형/정보제공형/커스텀 페르소나 타입 명확화
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.core.security import get_current_user
 from app.database import get_db
-from app.models.persona import Persona
+from app.core.security import get_current_user
 from app.models.user import User
-from app.schemas.persona import (
-    PersonaCreate,
-    PersonaOnboardingRequest,
-    PersonaResponse,
-    PersonaUpdate,
-)
+from app.models.persona import Persona
+from app.schemas.persona import PersonaCreate, PersonaUpdate, PersonaResponse, PersonaOnboardingRequest
 
 router = APIRouter()
 
@@ -77,7 +71,7 @@ async def create_persona(
     # 기존 active 페르소나 모두 비활성화
     stmt_deactivate = select(Persona).where(
         Persona.user_id == current_user.id,
-        Persona.is_active,
+        Persona.is_active == True,
     )
     result_deactivate = await db.execute(stmt_deactivate)
     existing_personas = result_deactivate.scalars().all()
@@ -127,7 +121,7 @@ async def update_persona(
             # 다른 페르소나 모두 비활성화
             stmt_deactivate = select(Persona).where(
                 Persona.user_id == current_user.id,
-                Persona.is_active,
+                Persona.is_active == True,
                 Persona.id != persona_id,
             )
             result_deactivate = await db.execute(stmt_deactivate)
@@ -186,7 +180,7 @@ async def onboarding_persona(
     # 기존 active 페르소나 모두 비활성화
     stmt_deactivate = select(Persona).where(
         Persona.user_id == current_user.id,
-        Persona.is_active,
+        Persona.is_active == True,
     )
     result_deactivate = await db.execute(stmt_deactivate)
     for p in result_deactivate.scalars().all():

@@ -1,12 +1,10 @@
-# 담당: 나솔림
+# 담당: 나솔림 
 # OpenAI GPT 스트리밍
-import logging
 import time
-from collections.abc import AsyncGenerator
-
-from fastapi import HTTPException
+import logging
 from openai import AsyncOpenAI, OpenAIError
-
+from fastapi import HTTPException
+from typing import AsyncGenerator
 from app.config import get_settings
 
 settings = get_settings()
@@ -18,7 +16,7 @@ class GPTService:
         self,
         diary_content: str,
         persona_prompt: str,
-    ) -> AsyncGenerator[str]:
+    ) -> AsyncGenerator[str, None]:
         # 일기 > gpt한테 말벗 반응을 생성
 
         t_start = time.time()
@@ -36,7 +34,7 @@ class GPTService:
             )
         except OpenAIError as e:
             logger.error(f"GPT 스트리밍 시작 오류: {e}")
-            raise HTTPException(status_code=503, detail="AI 서비스에 문제가 발생했어요.") from None
+            raise HTTPException(status_code=503, detail="AI 서비스에 문제가 발생했어요.")
 
         t_first_chunk = None
         buffer = ""
@@ -119,7 +117,7 @@ class GPTService:
             return response.choices[0].message.content.strip()
         except Exception as e:
             logger.error(f"페르소나 생성 오류: {e}")
-            raise HTTPException(status_code=503, detail="AI 서비스에 문제가 발생했어요.") from None
+            raise HTTPException(status_code=503, detail="AI 서비스에 문제가 발생했어요.")
 
     async def generate_hashtags(self, diary_content: str) -> list[str]:
         """일기 내용에서 해시태그 자동 생성"""

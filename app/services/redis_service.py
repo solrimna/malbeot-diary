@@ -1,6 +1,5 @@
 import hashlib
 import logging
-
 import redis.asyncio as aioredis
 
 from app.config import get_settings
@@ -19,7 +18,7 @@ async def get_redis():
 
 
 def make_tts_key(text: str, voice: str = "nova") -> str:
-    hash_ = hashlib.md5(f"{voice}:{text}".encode()).hexdigest()
+    hash_ = hashlib.md5(f"{voice}:{text}".encode("utf-8")).hexdigest()
     return f"tts:cache:{hash_}"
 
 

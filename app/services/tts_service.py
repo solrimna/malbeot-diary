@@ -1,12 +1,11 @@
 # 담당: 나솔림
 # Text-to-Speech
 
-import logging
+import io
 import time
-
-from fastapi import HTTPException
+import logging
 from openai import AsyncOpenAI, OpenAIError
-
+from fastapi import HTTPException
 from app.config import get_settings
 from app.services.redis_service import get_tts_cache, set_tts_cache
 
@@ -36,14 +35,14 @@ class TTSService:
             )
         except OpenAIError as e:
             logger.error(f"TTS 오류: {e}")
-            raise HTTPException(status_code=503, detail="음성 합성 서비스에 문제가 발생했어요.") from None
+            raise HTTPException(status_code=503, detail="음성 합성 서비스에 문제가 발생했어요.")
         # voice
-        # │ alloy   │ 중성적, 차분
-        # │ nova    │ 여성적, 따뜻함
-        # │ echo    │ 남성적, 묵직함
-        # │ fable   │ 부드럽고 표현력 있음
-        # │ onyx    │ 깊고 안정적인 남성
-        # │ shimmer │ 밝고 명랑한 여성
+        # │ alloy   │ 중성적, 차분                  
+        # │ nova    │ 여성적, 따뜻함 
+        # │ echo    │ 남성적, 묵직함                
+        # │ fable   │ 부드럽고 표현력 있음          
+        # │ onyx    │ 깊고 안정적인 남성            
+        # │ shimmer │ 밝고 명랑한 여성 
 
         audio_bytes = response.content
         elapsed = time.time() - start

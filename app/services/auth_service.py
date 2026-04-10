@@ -1,12 +1,11 @@
-from datetime import UTC, datetime
-
-from fastapi import HTTPException, status
-from sqlalchemy import select
+from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from fastapi import HTTPException, status
 
-from app.core.security import create_access_token, hash_password, verify_password
 from app.models.user import User
 from app.schemas.user import UserCreate
+from app.core.security import hash_password, verify_password, create_access_token
 
 
 class AuthService:
@@ -31,7 +30,7 @@ class AuthService:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="비밀번호 해시 처리에 실패했습니다.",
-            ) from None
+            )
 
         user = User(
             username=data.username,
@@ -60,7 +59,7 @@ class AuthService:
             )
 
         # 마지막 로그인 시각 갱신
-        user.last_login_at = datetime.now(UTC)
+        user.last_login_at = datetime.now(timezone.utc)
         await db.commit()
         await db.refresh(user)
 
