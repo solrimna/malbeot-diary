@@ -1,3 +1,7 @@
+import pytest
+
+pytestmark = pytest.mark.asyncio(loop_scope="session")
+
 REGISTER_URL = "/api/v1/auth/register"
 LOGIN_URL = "/api/v1/auth/login"
 

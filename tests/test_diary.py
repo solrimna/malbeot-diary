@@ -1,5 +1,7 @@
 import pytest
 
+pytestmark = pytest.mark.asyncio(loop_scope="session")
+
 DIARIES_URL = "/api/v1/diaries/"
 
 DIARY_DATA = {
