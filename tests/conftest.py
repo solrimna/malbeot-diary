@@ -3,7 +3,7 @@ import os
 import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.pool import StaticPool
+from sqlalchemy.pool import NullPool, StaticPool
 from unittest.mock import AsyncMock, patch
 
 from app.services.gpt_service import GPTService
@@ -17,7 +17,7 @@ if "sqlite" in TEST_DB_URL:
         poolclass=StaticPool,
     )
 else:
-    _engine = create_async_engine(TEST_DB_URL)
+    _engine = create_async_engine(TEST_DB_URL, poolclass=NullPool)
 _SessionLocal = async_sessionmaker(_engine, class_=AsyncSession, expire_on_commit=False)
 
 
