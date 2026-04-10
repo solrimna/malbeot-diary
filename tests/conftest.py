@@ -10,46 +10,52 @@ from app.services.gpt_service import GPTService
 
 TEST_DB_URL = os.getenv("TEST_DATABASE_URL", "sqlite+aiosqlite:///:memory:")
 
-if "sqlite" in TEST_DB_URL:
-    _engine = create_async_engine(
-        TEST_DB_URL,
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-    )
-else:
-    _engine = create_async_engine(TEST_DB_URL, poolclass=NullPool)
-_SessionLocal = async_sessionmaker(_engine, class_=AsyncSession, expire_on_commit=False)
-
 
 async def _mock_stream_feedback(self, **kwargs):
     """GPTService.stream_feedback 모킹 — 즉시 더미 피드백 반환"""
     yield "테스트 피드백입니다."
 
 
+@pytest.fixture(scope="session")
+async def engine():
+    """엔진을 pytest-asyncio 루프 안에서 생성 (루프 충돌 방지)"""
+    if "sqlite" in TEST_DB_URL:
+        eng = create_async_engine(
+            TEST_DB_URL,
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+        )
+    else:
+        eng = create_async_engine(TEST_DB_URL, poolclass=NullPool)
+    yield eng
+    await eng.dispose()
+
+
 @pytest.fixture(scope="session", autouse=True)
-async def setup_db():
+async def setup_db(engine):
     from app.database import Base
-    async with _engine.begin() as conn:
+    async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
 
 @pytest.fixture(autouse=True)
-async def clean_tables():
+async def clean_tables(engine):
     """각 테스트 전 모든 데이터 초기화"""
     from app.database import Base
-    async with _engine.begin() as conn:
+    async with engine.begin() as conn:
         for table in reversed(Base.metadata.sorted_tables):
             await conn.execute(table.delete())
 
 
 @pytest.fixture
-async def db():
-    async with _SessionLocal() as session:
+async def db(engine):
+    session_factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    async with session_factory() as session:
         yield session
 
 
 @pytest.fixture
-async def client(db):
+async def client(db, engine):
     from app.database import get_db
     from app.main import app
 
@@ -58,7 +64,7 @@ async def client(db):
 
     app.dependency_overrides[get_db] = _override
     with (
-        patch("app.main.engine", _engine),
+        patch("app.main.engine", engine),
         patch("app.services.alarm_scheduler.start_scheduler"),
         patch("app.services.alarm_scheduler.stop_scheduler"),
         patch.object(GPTService, "stream_feedback", _mock_stream_feedback),
