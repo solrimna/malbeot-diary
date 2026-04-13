@@ -2,8 +2,10 @@
 
 > 음성 입력과 AI 공감 피드백이 결합된 감성 일기 서비스
 
-**라이브 데모:** https://malbeot.duckdns.org/
+~~**라이브 데모:** https://malbeot.duckdns.org/~~
 
+> 멋사 팀 프로젝트 완료 이후 개인 프로젝트로 변경하여, 추가 작업 진행 중에 있습니다
+> url : https://github.com/solrimna/malbeot-diary-v2
 ---
 
 ## 주요 기능
